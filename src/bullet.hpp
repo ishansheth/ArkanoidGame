@@ -15,7 +15,6 @@ class Bullet : public Entity, public Circle
 {
 	static constexpr float defRadius{5.f};
 	static constexpr float defVelocity{10.f};
-	sf::CircleShape shape;
 	sf::Vector2f velocity{0.f,-defVelocity};
 public:
 	bool isStruck{false};
@@ -23,7 +22,7 @@ public:
 	{
 		shape.setPosition(mX,mY);
 		shape.setRadius(defRadius);
-		shape.setFillColor(sf::Color::White);
+		shape.setFillColor(sf::Color::Red);
 		shape.setOrigin(defRadius,defRadius);
 		updateRequired = updateStatus;
 	}

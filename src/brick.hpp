@@ -28,6 +28,8 @@ public:
 		shape.setPosition(mX,mY);
 		shape.setSize({defWidth,defHeight});
 		shape.setFillColor(defColor);
+		shape.setOutlineColor(sf::Color::White);
+		shape.setOutlineThickness(2.f);
 		shape.setOrigin(defWidth/2.f,defHeight/2.f);
 		hitsRequired = strength = hits;
 		updateRequired = updateStatus;

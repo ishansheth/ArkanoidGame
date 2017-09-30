@@ -24,11 +24,12 @@ void solvePaddleBallCollision(const Paddle& mpaddle, Ball& mball) noexcept
 	mball.velocity.x = (mball.x() < mpaddle.x()) ? (-Ball::defVelocity) : (Ball::defVelocity);
 }
 
-void solveBrickBulletCollision(Brick& mbrick,Bullet& mbullet)
+void solveBrickBulletCollision(Brick& mbrick,Bullet& mbullet) noexcept
 {
 	if(!isIntersecting(mbrick,mbullet))return;
-	mbullet.isStruck = true;
-	mbrick.destroyed = true;
+	--mbrick.hitsRequired;
+	if(!mbrick.hitsRequired) mbrick.destroyed = true;
+//	mbullet.isStruck = true;
 	mbullet.destroyed = true;
 }
 
