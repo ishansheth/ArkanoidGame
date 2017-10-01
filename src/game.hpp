@@ -45,9 +45,14 @@ class Game
 	Manager manager;
 	GameState state{GameState::inprocess};
 	bool ifGamePaused{false};
-	int currentStage{0};
+	int currentStage;
 
 	std::thread spawedThread;
+	std::thread textManagerThread;
+	std::thread mainEngineThread;
+	std::thread updateEntityThread;
+
+
 	static constexpr int brickCountX{11};
 	static constexpr int brickCountY{4};
 	static constexpr int brickStartCol{1};
@@ -57,23 +62,20 @@ class Game
 	sf::RenderWindow window{{wndWidth,wndHeight},"Arkanoid - 2"};
 	int gamescore;
 
-	int setFontPropertiesCall(sf::Text& fontType,float&& xlocation, float&& ylocation)
+	int setFontPropertiesCall(std::tuple<sf::Text&,float, float> textProp)
 	{
-		fontType.setFont(liberationSans);
-		fontType.setPosition(xlocation,ylocation);
-		fontType.setCharacterSize(25.f);
-		fontType.setColor(sf::Color::White);
+		std::get<0>(textProp).setFont(liberationSans);
+		std::get<0>(textProp).setPosition(std::get<1>(textProp),std::get<2>(textProp));
+		std::get<0>(textProp).setCharacterSize(25.f);
+		std::get<0>(textProp).setColor(sf::Color::White);
 		// Return value is required because initializer_list is of type "int" in setFontProperties
 		return 1;
 	}
 
-	template<typename Only>
-	void swallowArgs(Only o){}
-
 	template<typename...Ts>
 	void setFontProperties(Ts&&...args)
 	{
-		std::initializer_list<int>{(swallowArgs(args),0)...};
+		(void)std::initializer_list<int>{(setFontPropertiesCall(args),0)...};
 	}
 
 public:
@@ -81,13 +83,14 @@ public:
 	{
 		liberationSans.loadFromFile("/home/ishan/LiberationMono-Regular.ttf");
 		gamescore = 0;
-		currentStage = 0;
+		currentStage = 1;
 		window.setFramerateLimit(60);
 
-		// TODO : std::make_tuple(textLives,600.f,2.f) compiles but it does not change the property of the sf::Text object. This can be investigated/researched
-		setFontProperties(setFontPropertiesCall(textLives,600.f,2.f),setFontPropertiesCall(textScore,2.f,2.f),
-				setFontPropertiesCall(textStage,wndHeight/2.f,wndWidth/2.f),
-				setFontPropertiesCall(textState,wndWidth/2.f - 100.f,wndHeight/2.f));
+		// TODO : std::make_tuple(textLives,600.f,2.f) compiles but it does not change the property of the sf::Text object.
+		// This can be investigated/researched
+		setFontProperties(std::make_tuple(std::ref(textLives),600.f,2.f),std::make_tuple(std::ref(textScore),2.f,2.f),
+				std::make_tuple(std::ref(textStage),wndHeight/2.f,wndWidth/2.f),
+				std::make_tuple(std::ref(textState),wndWidth/2.f - 100.f,wndHeight/2.f));
 	}
 
 	void restart()
@@ -105,7 +108,6 @@ public:
 					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Magenta,3,false);
 			}
 		}
-
 		manager.create<Ball>(wndWidth/2.f,wndHeight/2.f,false);
 		manager.create<Paddle>(wndWidth/2.f,wndHeight-50,false);
 		int offset = 0;
@@ -123,13 +125,30 @@ public:
 		state = s;
 	}
 
+	void manageText()
+	{
+		textStage.setString("Stage: " + std::to_string(currentStage));
+		while(1)
+		{
+			std::this_thread::sleep_for (std::chrono::seconds(2));
+			textStage.setString("");
+		}
+	}
+
 	void run()
+	{
+		textManagerThread = std::thread([this](){manageText();});
+		mainEngineThread  = std::thread([this](){startEngineLoop();});
+		textManagerThread.join();
+		mainEngineThread.join();
+	}
+
+	void startEngineLoop()
 	{
 		while(true)
 		{
 			window.clear(sf::Color::Black);
-
-			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) break;
+			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) exit(0);
 
 			if(manager.checkBallDropped())
 			{
@@ -170,15 +189,18 @@ public:
 					ballentity->updateRequired = false;
 			}
 
-
 			if(manager.getAll<Brick>().empty())
 			{
 				//TODO: Put a delay and then break the loop
 				state = GameState::victory;
 				textState.setString("You Won!!");
-		    	manager.draw(window);
+				manager.draw(window);
 				window.draw(textState);
 		    	window.display();
+		    	restart();
+		    	state = GameState::inprocess;
+		    	currentStage++;
+				textStage.setString("Stage: " + std::to_string(currentStage));
 			}
 
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P) && !ifGamePaused)
@@ -244,11 +266,13 @@ public:
 
                 window.draw(textScore);
                 window.draw(textLives);
+                window.draw(textStage);
 		    	manager.refresh();
 		    	manager.draw(window);
 		    	window.display();
 
-		    }else if(state == GameState::newlife)
+		    }
+		    else if(state == GameState::newlife)
 		    {
 		    	manager.update();
                 textScore.setString("Score:"+std::to_string(gamescore));
@@ -264,7 +288,6 @@ public:
 			{
 				spawedThread.join();
 			}
-
 		}
 
 	}
