@@ -1,10 +1,3 @@
-/*
- * LimitedLifetimeEntity.hpp
- *
- *  Created on: Sep 30, 2017
- *      Author: ishan
- */
-
 #ifndef SRC_LIMITEDLIFETIMEENTITY_HPP_
 #define SRC_LIMITEDLIFETIMEENTITY_HPP_
 

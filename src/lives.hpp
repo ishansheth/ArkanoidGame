@@ -1,10 +1,3 @@
-/*
- * lives.hpp
- *
- *  Created on: Sep 9, 2017
- *      Author: ishan
- */
-
 #ifndef SRC_LIVES_HPP_
 #define SRC_LIVES_HPP_
 
@@ -12,6 +5,9 @@
 #include "entity.hpp"
 #include <vector>
 
+/**
+ * The class is responsible to show the circular dots which represent the number of live player has in the game
+ */
 class lives : public Entity, public Circle
 {
 	sf::CircleShape shape;
@@ -32,15 +28,9 @@ public:
 			mTarget.draw(shape);
 	}
 
-	virtual void update() override
-	{
+	virtual void update() override	{}
 
-	}
-
-	virtual bool checkEntityDied() override
-	{
-
-	}
+	virtual bool checkEntityDied() override{}
 };
 
 

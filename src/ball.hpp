@@ -1,10 +1,3 @@
-/*
- * ball.hpp
- *
- *  Created on: Aug 30, 2017
- *      Author: ishan
- */
-
 #ifndef SRC_BALL_HPP_
 #define SRC_BALL_HPP_
 
@@ -13,21 +6,28 @@
 
 constexpr unsigned int wndWidth{800},wndHeight{600};
 
+/**
+ * Ball entity which is resonsible for the ball in the game.
+ * This class takes care of the circle shape, its properties and its movement
+ */
+
 class Ball : public Circle, public Entity
 {
 public:
 	static const sf::Color defColor;
 	static constexpr float defRadius{5.f};
-	static constexpr float defVelocity{2.f};
-	sf::Vector2f velocity{-defVelocity,-defVelocity};
+	float defVelocity{2.f};
+	sf::Vector2f velocity;
 
 //	bool isLeftCrossed(){ return((x() - shape.getRadius()) < 0);}
 //	bool isRightCrossed(){return((x() + shape.getRadius()) > wndWidth);}
 //	bool isTopCrossed(){return((y() - shape.getRadius()) < 0);}
 //	bool isBottomCrossed(){return((y() + shape.getRadius()) > wndHeight);}
 
-	Ball(float mX,float mY,bool updateStatus)
+	Ball(float mX,float mY,bool updateStatus,float xvector,float yvector)
 	{
+		velocity.x = xvector;
+		velocity.y = yvector;
 		shape.setPosition(mX,mY);
 		shape.setRadius(defRadius);
 		shape.setFillColor(defColor);
@@ -35,10 +35,11 @@ public:
 		updateRequired = updateStatus;
 	}
 
-	~Ball()
-	{}
+	~Ball(){}
 
-	sf::Vector2f setVelocity(float x, float y)
+	sf::Vector2f getVelocity(){ return velocity; }
+
+	void setVelocity(float x,float y)
 	{
 		velocity.x = x;
 		velocity.y = y;
@@ -65,6 +66,10 @@ public:
 		return(bottom() > wndHeight);
 	}
 
+	/**
+	 * This function takes care of moving the ball along with paddle when its sitting on the paddle.
+	 * So it creates the relative motion between ball and paddle
+	 */
 	void solveBallPaddleRelativeMotion()
 	{
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) && left() > 0)
@@ -86,6 +91,7 @@ public:
 	}
 
 private:
+	// This function keeps the ball inside the window and does not let it go out
 	void solveBoundCollisions() noexcept
 	{
         if(left() < 0)
@@ -111,6 +117,7 @@ private:
 
 };
 
+// Green color of the ball is set fixed as a static variable
 const sf::Color Ball::defColor{sf::Color::Green};
 
 

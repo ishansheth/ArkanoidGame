@@ -1,16 +1,12 @@
-/*
- * paddle.hpp
- *
- *  Created on: Aug 30, 2017
- *      Author: ishan
- */
-
 #ifndef SRC_PADDLE_HPP_
 #define SRC_PADDLE_HPP_
 
 #include "entity.hpp"
 #include "rectangle.hpp"
 
+/**
+ * This class represents the paddle entity in the game. It takes care of its display and also its movement
+ */
 class Paddle : public Rectangle, public Entity
 {
 public:

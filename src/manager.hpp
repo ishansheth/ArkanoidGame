@@ -1,10 +1,3 @@
-/*
- * manager.hpp
- *
- *  Created on: Sep 9, 2017
- *      Author: ishan
- */
-
 #ifndef SRC_MANAGER_HPP_
 #define SRC_MANAGER_HPP_
 
@@ -16,21 +9,26 @@
 #include <vector>
 #include <memory>
 
+/**
+ * Manager class which manages all the entities in the game. Creating, destroying
+ */
 class Manager
 {
 private:
-	std::vector<std::shared_ptr<Entity>> entities;
-	std::map< std::size_t,std::vector<Entity*> > groupedEntities;
+
+	std::vector<std::shared_ptr<Entity>> entities; // the vector which contains the entities object
+	std::map< std::size_t,std::vector<Entity*> > groupedEntities; // the map which contains the entities object and can be accessed by the hash value of the object as a key
 
 public:
 
-	int score;
-	int destroyedEntity;
+	//Total number of lives the player has in the game
 	int totalLives{3};
-	int noStage{3};
 
-	Manager(){score = 0;}
+	Manager(){}
 
+	/**
+	 * a function templated with variadic arguments which is required to generate different kind of entities in the game with varying number of arguments
+	 */
 	template<typename T,typename...Args>
 	T& create(Args&&...args)
 	{
@@ -42,6 +40,9 @@ public:
         return *ptr;
 	}
 
+	/**
+	 * The function to remove all the entites from the map and vector in which the destroyed variable is set to true
+	 */
 	void refresh()
 	{
 		for(auto& pair: groupedEntities)
@@ -61,19 +62,21 @@ public:
 				}),std::end(entities));
 	}
 
-
+	// clear the containers of the entities
 	void clear()
 	{
 		groupedEntities.clear();
 		entities.clear();
 	}
 
+	// The utility function which can be used to get the certain kind of entity from the map
 	template<typename T>
 	std::vector<Entity*> getAll()
 	{
 		return groupedEntities[typeid(T).hash_code()];
 	}
 
+	// The utility function which takes the entity type and functor as a template argument and calls the function with that entity as a parameter
 	template<typename T, typename TFunc>
 	void forEach(const TFunc& mFunc)
 	{
@@ -94,19 +97,6 @@ public:
 		}else{
 			return false;
 		}
-	}
-
-	template<typename T>
-	int countDestroyedEntity()
-	{
-		destroyedEntity = 0;
-		auto vector(getAll<T>());
-		for(auto element : vector)
-		{
-			if(element->destroyed)
-				++destroyedEntity;
-		}
-		return destroyedEntity;
 	}
 
 	template<typename T>
