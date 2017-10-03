@@ -21,9 +21,7 @@ private:
 
 public:
 
-	//Total number of lives the player has in the game
-	int totalLives{3};
-
+	int totalLives{3};	//Total number of lives the player has in the game
 	Manager(){}
 
 	/**
@@ -124,6 +122,7 @@ public:
 			}
 		}
 	}
+
 	void update()
 	{
 		for(const auto& e: entities)
@@ -134,6 +133,7 @@ public:
 			}
 		}
 	}
+
 	void draw(sf::RenderWindow& mTarget)
 	{
 		for(auto& e: entities)
