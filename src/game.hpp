@@ -56,7 +56,6 @@ class Game
 
 	/*threads responsible for several tasks related to entities*/
 	std::thread spawedThread;
-	std::thread textManagerThread;
 	std::thread mainEngineThread;
 	std::thread updateEntityThread;
 	std::condition_variable updateCV;
@@ -97,7 +96,6 @@ class Game
 public:
 	Game()
 	{
-//		std::cout<<"filepath:"<<FILEPATH<<std::endl;
 		liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH)); 				// loading the font file from file system in sf::Font
 		gamescore = 0; 															// initial game score
 		currentStage = 1; 														// initial stage number
@@ -178,10 +176,8 @@ public:
 
 	void run()
 	{
-		//	textManagerThread = std::thread([this](){manageText();});
 		mainEngineThread  = std::thread([this](){startEngineLoop();});
 		updateEntityThread = std::thread([this](){updateEntities();});
-//		textManagerThread.join();
 		mainEngineThread.join();
 		updateEntityThread.join();
 	}
@@ -208,7 +204,7 @@ public:
 				}else{
 					state = GameState::newlife;
 					Paddle* paddleentity = manager.getSingleEntity<Paddle>();
-			     	manager.create<Ball>(paddleentity->x(),paddleentity->y()-2*Ball::defRadius,true,-2.f,-2.f);
+			     	manager.create<Ball>(paddleentity->x(),paddleentity->y()-2*Ball::defRadius,true,2.f,-2.f);
 				}
 			}
 
@@ -221,20 +217,58 @@ public:
 
 			if(state == GameState::newlife)
 			{
-				Ball* mball = manager.getSingleEntity<Ball>();
-				mball->solveBallPaddleRelativeMotion();
+		    	{
+		    		std::lock_guard<std::mutex> lk(mtx);
+					Ball* mball = manager.getSingleEntity<Ball>();
+					mball->solveBallPaddleRelativeMotion();
+		    		readyForupdate = true;
+		    	}
+		    	updateCV.notify_one();
+		    	{
+		    		std::unique_lock<std::mutex> lk(mtx);
+		    		updateCV.wait(lk,[this](){return updateDone;});
+		    		updateDone=false;
+		    	}
+		    	textScore.setString("Score:"+std::to_string(gamescore));
+                textLives.setString("Balls:");
+                window.draw(textScore);
+                window.draw(textLives);
+		    	manager.refresh();
+		    	manager.draw(window);
+		    	window.display();
+
 			}
 
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && state == GameState::newlife)
 			{
-					spawedThread = std::thread([this](){changeState(GameState::inprocess);});
+		    	{
+		    		std::lock_guard<std::mutex> lk(mtx);
 					Ball* ballentity = manager.getSingleEntity<Ball>();
+					ballentity->velocity.x = -2.f;
+					ballentity->velocity.y = 2.f;
 					ballentity->updateRequired = false;
+		    		readyForupdate = true;
+		    	}
+		    	updateCV.notify_one();
+		    	{
+		    		std::unique_lock<std::mutex> lk(mtx);
+		    		updateCV.wait(lk,[this](){return updateDone;});
+		    		updateDone=false;
+		    	}
+				spawedThread = std::thread([this](){changeState(GameState::inprocess);});
+
+		    	textScore.setString("Score:"+std::to_string(gamescore));
+                textLives.setString("Balls:");
+                window.draw(textScore);
+                window.draw(textLives);
+		    	manager.refresh();
+		    	manager.draw(window);
+		    	window.display();
+
 			}
 
 			if(manager.getAll<Brick>().empty())
 			{
-				//TODO: Put a delay and then break the loop
 				textState.setString("You Won!!");
 				manager.draw(window);
 				window.draw(textState);
@@ -242,7 +276,6 @@ public:
 		    	state = GameState::inprocess;
 		    	currentStage++;
 		    	restart();
-//				textStage.setString("Stage: " + std::to_string(currentStage));
 			}
 
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P) && !ifGamePaused)
@@ -267,17 +300,15 @@ public:
 		    		std::lock_guard<std::mutex> lk(mtx);
 		    		readyForupdate = true;
 		    	}
-		    	std::cout<<"send update signal"<<std::endl;
 		    	updateCV.notify_one();
-//		    	manager.update();
 		    	{
 		    		std::unique_lock<std::mutex> lk(mtx);
 		    		updateCV.wait(lk,[this](){return updateDone;});
+		    		updateDone=false;
 		    	}
 
-		    	std::cout<<"update done by worker thread"<<std::endl;
-		    	// resolve ball and brick collision for each brick
-                manager.forEach<Ball>([this](Ball& mBall)
+
+                manager.forEach<Ball>([this](Ball& mBall)		    	// resolve ball and brick collision for each brick
                 {
                 	manager.forEach<Brick>([&mBall](Brick& mBrick)
                     {
@@ -285,8 +316,7 @@ public:
                     });
                 });
 
-                // resolve ball and paddle collision
-                manager.forEach<Ball>([this](Ball& mball)
+                manager.forEach<Ball>([this](Ball& mball)                // resolve ball and paddle collision
                 		{
                 			manager.forEach<Paddle>([&mball](Paddle& mPaddle)
                 			{
@@ -317,29 +347,6 @@ public:
                 textScore.setString("Score:"+std::to_string(gamescore));
                 textLives.setString("Balls:");
 
-                window.draw(textScore);
-                window.draw(textLives);
-		    	manager.refresh();
-		    	manager.draw(window);
-		    	window.display();
-
-		    }
-		    else if(state == GameState::newlife)
-		    {
-//		    	manager.update();
-		    	{
-		    		std::lock_guard<std::mutex> lk(mtx);
-		    		readyForupdate = true;
-		    	}
-		    	updateCV.notify_one();
-//		    	manager.update();
-		    	{
-		    		std::unique_lock<std::mutex> lk(mtx);
-		    		updateCV.wait(lk,[this](){return updateDone;});
-		    	}
-
-                textScore.setString("Score:"+std::to_string(gamescore));
-                textLives.setString("Balls:");
                 window.draw(textScore);
                 window.draw(textLives);
 		    	manager.refresh();

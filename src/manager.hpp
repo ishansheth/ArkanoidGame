@@ -125,6 +125,9 @@ public:
 
 	void update()
 	{
+//		auto x = getSingleEntity<Ball>();
+//		if(!x->updateRequired)
+//			std::cout<<"ball needs to be updated"<<std::endl;
 		for(const auto& e: entities)
 		{
 			if(!e->updateRequired)

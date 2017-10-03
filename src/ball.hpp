@@ -16,7 +16,7 @@ class Ball : public Circle, public Entity
 public:
 	static const sf::Color defColor;
 	static constexpr float defRadius{5.f};
-	float defVelocity{2.f};
+//	float defVelocity{2.f};
 	sf::Vector2f velocity;
 
 //	bool isLeftCrossed(){ return((x() - shape.getRadius()) < 0);}
