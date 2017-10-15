@@ -5,6 +5,9 @@
 #include "ball.hpp"
 #include "stageManager.hpp"
 #include "utility.hpp"
+#include "SoundEntity.hpp"
+#include "BallSound.hpp"
+#include "clock.hpp"
 #include <map>
 #include <vector>
 #include <memory>
@@ -16,13 +19,18 @@ class Manager
 {
 private:
 
-	std::vector<std::shared_ptr<Entity>> entities; // the vector which contains the entities object
-	std::map< std::size_t,std::vector<Entity*> > groupedEntities; // the map which contains the entities object and can be accessed by the hash value of the object as a key
+	std::vector<std::shared_ptr<Entity>> entities; 					// the vector which contains the entities object
+	std::map< std::size_t,std::vector<Entity*> > groupedEntities;	// the map which contains the entities object and can be accessed by the hash value of the object as a key
+
+	std::vector<std::shared_ptr<SoundEntity>> soundentity;
 
 public:
 
-	int totalLives{3};	//Total number of lives the player has in the game
+	int totalLives{3};												//Total number of lives the player has in the game
 	Manager(){}
+
+	Manager(const Manager& otherManager) = delete;
+	Manager& operator=(const Manager& otherManager) = delete;
 
 	/**
 	 * a function templated with variadic arguments which is required to generate different kind of entities in the game with varying number of arguments
@@ -125,9 +133,6 @@ public:
 
 	void update()
 	{
-//		auto x = getSingleEntity<Ball>();
-//		if(!x->updateRequired)
-//			std::cout<<"ball needs to be updated"<<std::endl;
 		for(const auto& e: entities)
 		{
 			if(!e->updateRequired)

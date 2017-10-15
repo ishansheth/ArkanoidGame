@@ -3,6 +3,11 @@
 
 #include "entity.hpp"
 #include "circle.hpp"
+#include "SoundEntity.hpp"
+#include "BallSound.hpp"
+#include <memory>
+#define STRINGIZE(x) #x
+#define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 
 constexpr unsigned int wndWidth{800},wndHeight{600};
 
@@ -13,11 +18,12 @@ constexpr unsigned int wndWidth{800},wndHeight{600};
 
 class Ball : public Circle, public Entity
 {
+
 public:
 	static const sf::Color defColor;
 	static constexpr float defRadius{5.f};
-//	float defVelocity{2.f};
 	sf::Vector2f velocity;
+	std::shared_ptr<SoundEntity> beepSound;
 
 //	bool isLeftCrossed(){ return((x() - shape.getRadius()) < 0);}
 //	bool isRightCrossed(){return((x() + shape.getRadius()) > wndWidth);}
@@ -33,9 +39,13 @@ public:
 		shape.setFillColor(defColor);
 		shape.setOrigin(defRadius,defRadius);
 		updateRequired = updateStatus;
+		beepSound = std::make_shared<BallSound>(STRINGIZE_VALUE_OF(BEEPSOUNDFILE));
 	}
 
-	~Ball(){}
+	~Ball()
+	{
+
+	}
 
 	sf::Vector2f getVelocity(){ return velocity; }
 
@@ -95,14 +105,26 @@ private:
 	void solveBoundCollisions() noexcept
 	{
         if(left() < 0)
+        {
+    		beepSound->playSound();
             velocity.x = -velocity.x;
+        }
         else if(right() > wndWidth)
+        {
+    		beepSound->playSound();
             velocity.x = -velocity.x;
+        }
 
         if(top() < 0)
+        {
             velocity.y = -velocity.y;
+    		beepSound->playSound();
+        }
         else if(bottom() > wndHeight)
+        {
             velocity.y = -velocity.y;
+    		beepSound->playSound();
+        }
 
 //		if(isLeftCrossed() || isRightCrossed())
 //		{

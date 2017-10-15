@@ -12,7 +12,7 @@ class lives : public Entity, public Circle
 {
 	sf::CircleShape shape;
 public:
-	static constexpr float defRadius{7.f};
+	static constexpr float defRadius{5.f};
 
 	lives(float mX,float mY,bool updateStatus)
 	{

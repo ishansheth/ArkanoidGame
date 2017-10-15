@@ -25,7 +25,10 @@ void solveBrickBulletCollision(Brick& mbrick,Bullet& mbullet) noexcept
 {
 	if(!isIntersecting(mbrick,mbullet))return;
 	--mbrick.hitsRequired;
-	if(!mbrick.hitsRequired) mbrick.destroyed = true;
+	if(!mbrick.hitsRequired)
+	{
+		mbrick.flingBrick();
+	}
 	mbullet.destroyed = true;
 }
 
@@ -33,7 +36,11 @@ void solveBallBrickCollision(Brick& mbrick, Ball& mball) noexcept
 {
 	if(!isIntersecting(mbrick,mball)) return;
 	--mbrick.hitsRequired;
-	if(!mbrick.hitsRequired) mbrick.destroyed = true;
+	mball.beepSound->playSound();
+	if(!mbrick.hitsRequired)
+	{
+		mbrick.flingBrick();
+	}
 
 	float overlapLeft{mball.right()-mbrick.left()};
 	float overlapRight{mbrick.right()-mball.left()};

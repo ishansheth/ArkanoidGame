@@ -3,6 +3,7 @@
 
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 #include <vector>
 #include <memory>
@@ -17,6 +18,7 @@
 #include "entity.hpp"
 #include "lives.hpp"
 #include "manager.hpp"
+#include "clock.hpp"
 #include "utility.hpp"
 #include <thread>
 #include <mutex>
@@ -41,6 +43,7 @@ class Game
 	sf::Text textState /*text for displaying state("You won","You lost")*/,
 	textLives /*text for displaying the remaining lives on the top right corner*/,
 	textScore /*text for displaying the remaining lives on the top left corner*/,
+	textTime,
 	textStage /*text for displaying the stage of the game when it starts*/;
 
 	Manager manager; /*manager class which will take care of creating and destroying the entities*/
@@ -48,6 +51,8 @@ class Game
 	GameState state{GameState::inprocess}; /*enum variable for setting the state of the game*/
 
 	bool ifGamePaused{false}; /*bool to check if game is paused or not*/
+
+	std::shared_ptr<Clock> timerClock;
 
 	bool readyForupdate{false};
 	bool updateDone{false};
@@ -58,9 +63,11 @@ class Game
 	std::thread spawedThread;
 	std::thread mainEngineThread;
 	std::thread updateEntityThread;
+	std::thread timerThread;
 	std::condition_variable updateCV;
 	std::mutex mtx;
 
+	double timeSeconds;
 	static constexpr int brickCountX{11};  										// No of bricks in the X direction, no of columns, 11
 	static constexpr int brickCountY{4};   										// No of bricks in the Y direction, no of rows , 4
 	static constexpr int brickStartCol{1}; 										// start column of the bricks, 1
@@ -79,7 +86,7 @@ class Game
 	{
 		std::get<0>(textProp).setFont(liberationSans);
 		std::get<0>(textProp).setPosition(std::get<1>(textProp),std::get<2>(textProp));
-		std::get<0>(textProp).setCharacterSize(25.f);
+		std::get<0>(textProp).setCharacterSize(15.f);
 		std::get<0>(textProp).setColor(sf::Color::White);
 		return 1;																// Return value is required because initializer_list is of type "int" in setFontProperties
 	}
@@ -93,26 +100,8 @@ class Game
 		(void)std::initializer_list<int>{(setFontPropertiesCall(args),0)...};
 	}
 
-public:
-	Game()
+	void createEntities()
 	{
-		liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH)); 				// loading the font file from file system in sf::Font
-		gamescore = 0; 															// initial game score
-		currentStage = 1; 														// initial stage number
-		window.setFramerateLimit(60); 											// setting the frame rate for the window
-
-		setFontProperties(														// This is call the to the function with variadic templates.
-				std::make_tuple(std::ref(textLives),600.f,2.f),					// It can take any number of tuples with type <sf::Text&,float,float>
-				std::make_tuple(std::ref(textScore),2.f,2.f),
-				std::make_tuple(std::ref(textStage),wndWidth/2.f - 70.f,wndHeight/2.f),
-				std::make_tuple(std::ref(textState),wndWidth/2.f - 100.f,wndHeight/2.f)
-		);
-	}
-
-	void restart()
-	{
-		manager.clear(); 														// clear all the entities from the container while restart
-		showStageNumberScreen();
 		for(int i = 0;i < brickCountX;i++)										// put bricks
 		{
 			for(int j = 0;j < brickCountY;j++)
@@ -130,9 +119,35 @@ public:
 		int offset = 0;															// offset between the lives circles
 		for(int i = 0; i < manager.totalLives; i++)
 		{
-			manager.create<lives>(700.f + offset,20.f,false);					// create the lives entity which is circles in the top right corner
+			manager.create<lives>(720.f + offset,12.f,false);					// create the lives entity which is circles in the top right corner
 			offset += 2*lives::defRadius + 2.f;
 		}
+
+	}
+
+public:
+	Game()
+	{
+		liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH)); 				// loading the font file from file system in sf::Font
+		gamescore = 0; 															// initial game score
+		currentStage = 1; 														// initial stage number
+		window.setFramerateLimit(60); 											// setting the frame rate for the window
+		timeSeconds = 0;
+		setFontProperties(														// This is call the to the function with variadic templates.
+				std::make_tuple(std::ref(textLives),650.f,2.f),					// It can take any number of tuples with type <sf::Text&,float,float>
+				std::make_tuple(std::ref(textScore),2.f,2.f),
+				std::make_tuple(std::ref(textStage),wndWidth/2.f - 70.f,wndHeight/2.f),
+				std::make_tuple(std::ref(textState),wndWidth/2.f - 100.f,wndHeight/2.f),
+				std::make_tuple(std::ref(textTime),wndWidth/2.f - 100.f,2.f)
+		);
+	}
+
+	void restart()
+	{
+		manager.clear(); 														// clear all the entities from the container while restart
+		showStageNumberScreen();
+		timeSeconds = 10;														// showStageNumberScreen takes 2 seconds. so reset seconds count to zero after that, not before
+		createEntities();
 	}
 
 	void changeState(const GameState& s)
@@ -174,19 +189,38 @@ public:
 		}
 	}
 
+	void showTime()
+		{
+			while(1)
+			{
+				std::this_thread::sleep_for (std::chrono::seconds(1));			// This Delay is required because when spacebar is pressed, the bullet can not be shot immediately
+				timeSeconds--;
+				textTime.setString(std::string("Time:" + std::to_string(static_cast<int>(timeSeconds))));
+			}
+		}
+
 	void run()
 	{
 		mainEngineThread  = std::thread([this](){startEngineLoop();});
 		updateEntityThread = std::thread([this](){updateEntities();});
+		timerThread = std::thread([this](){showTime();});
 		mainEngineThread.join();
 		updateEntityThread.join();
+		timerThread.join();
+
+		//      TODO: Make a timer class work, problem is it flickers the screen
+		//		timerClock = std::make_shared<Clock>(2,2);
+		//		timerClock->start(window);
+
 	}
+
 
 	void startEngineLoop()
 	{
 		while(true)
 		{
 			window.clear(sf::Color::Black);
+			window.draw(textTime);
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) exit(0);
 
 			if(manager.checkBallDropped())
@@ -206,6 +240,15 @@ public:
 					Paddle* paddleentity = manager.getSingleEntity<Paddle>();
 			     	manager.create<Ball>(paddleentity->x(),paddleentity->y()-2*Ball::defRadius,true,2.f,-2.f);
 				}
+			}
+
+			if(timeSeconds <= 0)
+			{
+				window.clear(sf::Color::Black);
+				state = GameState::lost;
+				textState.setString("You Lost!!");
+				window.draw(textState);
+		    	window.display();
 			}
 
 			// If game is in progress and space bar is hit, then shoot bullets
@@ -343,6 +386,15 @@ public:
 		    					gamescore += brick.strength;
 		    				}
 		    			});
+
+		    	manager.forEach<Brick>([this](Brick& mbrick)
+		    	{
+		    		if(mbrick.destroyed)
+		    			{
+
+		    			}
+		    	}
+		    	);
 
                 textScore.setString("Score:"+std::to_string(gamescore));
                 textLives.setString("Balls:");

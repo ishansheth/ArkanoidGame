@@ -3,18 +3,23 @@
 
 #include "entity.hpp"
 #include "rectangle.hpp"
+#include <thread>
+#include <chrono>
 
 /**
  * This class shows the bricks entities and it is responsible to display the bricks on the window
  */
 class Brick : public Rectangle,public Entity
 {
+	bool flingFlag{false};
+
 public:
 	sf::Color defColor;
 	static constexpr float defHeight{20.f};
 	static constexpr float defWidth{60.f};
 	static constexpr float defVelocity{4.f};
 	sf::Vector2f velocity{-defVelocity,0.f};
+	sf::Vector2f velocityFlig{-defVelocity,-defVelocity};
 
 	// No of hits still required to destroy the brick. If that reaches the strength, then it will break
 	int hitsRequired;
@@ -36,7 +41,9 @@ public:
 		stagecount = currentstagecount;
 	}
 
-	~Brick(){}
+	~Brick()
+	{
+	}
 
 	virtual void draw(sf::RenderWindow& window) override
 	{
@@ -46,22 +53,27 @@ public:
 	virtual void update() override
 	{
 		// if the game is in second stage onwards, then bricks will move
-		if(stagecount > 1)
+		if(flingFlag)
 		{
-			handleBrickMovements();
-			shape.move(velocity);
+			shape.rotate(10);
+			shape.move(velocityFlig);
+		}
+		if(x()<0)
+		{
+			destroyed = true;
 		}
 	}
 
 	virtual bool checkEntityDied() override
 	{
-		if(hitsRequired == 0)
-		{
-			return true;
-		}else{
-			return false;
-		}
+		return (hitsRequired == 0);
 	}
+
+	void flingBrick()
+	{
+		flingFlag = true;
+	}
+
 private:
 	void handleBrickMovements()
 	{
