@@ -69,6 +69,8 @@ public:
 		return (hitsRequired == 0);
 	}
 
+	bool isFlying(){return flingFlag;}
+
 	void flingBrick()
 	{
 		flingFlag = true;

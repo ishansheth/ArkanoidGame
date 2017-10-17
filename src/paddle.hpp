@@ -36,6 +36,11 @@ public:
 		shape.move(velocity);
 	}
 
+	void movePaddlePosition(float mX,float mY)
+	{
+		shape.setPosition(mX,mY);
+	}
+
 	virtual void draw(sf::RenderWindow& window) override {window.draw(shape);}
 
 	virtual bool checkEntityDied() override

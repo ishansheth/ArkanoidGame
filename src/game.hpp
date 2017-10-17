@@ -56,6 +56,7 @@ class Game
 
 	bool readyForupdate{false};
 	bool updateDone{false};
+	bool startAI{true};
 
 	int currentStage; /*current stage variable which will be incremented as the stage progresses*/
 
@@ -64,8 +65,9 @@ class Game
 	std::thread mainEngineThread;
 	std::thread updateEntityThread;
 	std::thread timerThread;
-	std::condition_variable updateCV;
-	std::mutex mtx;
+	std::thread AIModeThread;
+	std::condition_variable updateCV,AIcv;
+	std::mutex mtx,AImtx;
 
 	double timeSeconds;
 	static constexpr int brickCountX{11};  										// No of bricks in the X direction, no of columns, 11
@@ -111,11 +113,12 @@ class Game
 				if(i%2==0)
 					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Cyan,1,currentStage,false);		// create brick entity which requires an update, so last parameter is false
 				else
-					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Magenta,3,currentStage,false);	// create brick entity which requires an update, so last parameter is false
+					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Magenta,1,currentStage,false);	// create brick entity which requires an update, so last parameter is false
 			}
 		}
-		manager.create<Ball>(wndWidth/2.f,wndHeight/2.f,false,-2.f,2.f);		// create the ball entity
-		manager.create<Paddle>(wndWidth/2.f,wndHeight-50,false);				// create the padle entity
+
+		manager.create<Ball>(wndWidth/2.f,wndHeight/2.f,false,-8.f,8.f);		// create the ball entity
+		manager.create<Paddle>(wndWidth/2.f,wndHeight-50,true);				// create the paddle entity
 		int offset = 0;															// offset between the lives circles
 		for(int i = 0; i < manager.totalLives; i++)
 		{
@@ -146,8 +149,9 @@ public:
 	{
 		manager.clear(); 														// clear all the entities from the container while restart
 		showStageNumberScreen();
-		timeSeconds = 10;														// showStageNumberScreen takes 2 seconds. so reset seconds count to zero after that, not before
+		timeSeconds = 1000;														// showStageNumberScreen takes 2 seconds. so reset seconds count to zero after that, not before
 		createEntities();
+		std::cout<<"entities created"<<std::endl;
 	}
 
 	void changeState(const GameState& s)
@@ -177,6 +181,7 @@ public:
 
 	void updateEntities()
 	{
+		std::cout<<"update entities thread started"<<std::endl;
 		while(1)
 		{
 			std::unique_lock<std::mutex> lck(mtx);
@@ -189,13 +194,27 @@ public:
 		}
 	}
 
+	void automateGame()
+	{
+		std::cout<<"AI thread started"<<std::endl;
+		while(1)
+		{
+			std::unique_lock<std::mutex> lck(AImtx);
+			AIcv.wait(lck,[this](){return startAI;});
+			manager.predictedPaddlePosition();
+			lck.unlock();
+		}
+	}
+
 	void showTime()
 		{
+		std::cout<<"timer thread started"<<std::endl;
 			while(1)
 			{
 				std::this_thread::sleep_for (std::chrono::seconds(1));			// This Delay is required because when spacebar is pressed, the bullet can not be shot immediately
 				timeSeconds--;
-				textTime.setString(std::string("Time:" + std::to_string(static_cast<int>(timeSeconds))));
+				if(timeSeconds == 0) break;
+				textTime.setString(std::string("Time:" + std::to_string(static_cast<int>(timeSeconds)) + "          "+ "Stage:"+std::to_string(static_cast<int>(currentStage))));
 			}
 		}
 
@@ -204,9 +223,11 @@ public:
 		mainEngineThread  = std::thread([this](){startEngineLoop();});
 		updateEntityThread = std::thread([this](){updateEntities();});
 		timerThread = std::thread([this](){showTime();});
+		AIModeThread = std::thread([this](){automateGame();});
 		mainEngineThread.join();
 		updateEntityThread.join();
 		timerThread.join();
+		AIModeThread.join();
 
 		//      TODO: Make a timer class work, problem is it flickers the screen
 		//		timerClock = std::make_shared<Clock>(2,2);
@@ -217,12 +238,13 @@ public:
 
 	void startEngineLoop()
 	{
+		std::cout<<"main engine thread started"<<std::endl;
 		while(true)
 		{
 			window.clear(sf::Color::Black);
 			window.draw(textTime);
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) exit(0);
-
+			manager.checkBallDropped();
 			if(manager.checkBallDropped())
 			{
 				manager.handleBallDrop();
@@ -242,7 +264,8 @@ public:
 				}
 			}
 
-			if(timeSeconds <= 0)
+			// When time is up, you lost the game
+			if(timeSeconds == 0)
 			{
 				window.clear(sf::Color::Black);
 				state = GameState::lost;
@@ -312,6 +335,8 @@ public:
 
 			if(manager.getAll<Brick>().empty())
 			{
+	    		std::unique_lock<std::mutex> lk(AImtx);
+				startAI = false;
 				textState.setString("You Won!!");
 				manager.draw(window);
 				window.draw(textState);
@@ -319,6 +344,9 @@ public:
 		    	state = GameState::inprocess;
 		    	currentStage++;
 		    	restart();
+		    	lk.unlock();
+		    	startAI = true;
+		    	AIcv.notify_one();
 			}
 
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P) && !ifGamePaused)

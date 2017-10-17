@@ -34,32 +34,35 @@ void solveBrickBulletCollision(Brick& mbrick,Bullet& mbullet) noexcept
 
 void solveBallBrickCollision(Brick& mbrick, Ball& mball) noexcept
 {
-	if(!isIntersecting(mbrick,mball)) return;
-	--mbrick.hitsRequired;
-	mball.beepSound->playSound();
-	if(!mbrick.hitsRequired)
+	if(!mbrick.isFlying())
 	{
-		mbrick.flingBrick();
-	}
+		if(!isIntersecting(mbrick,mball)) return;
+		--mbrick.hitsRequired;
+		mball.beepSound->playSound();
+		if(!mbrick.hitsRequired)
+		{
+			mbrick.flingBrick();
+		}
 
-	float overlapLeft{mball.right()-mbrick.left()};
-	float overlapRight{mbrick.right()-mball.left()};
-	float overlapTop{mball.bottom()-mbrick.top()};
-	float overlapBottom{mbrick.bottom()-mball.top()};
+		float overlapLeft{mball.right()-mbrick.left()};
+		float overlapRight{mbrick.right()-mball.left()};
+		float overlapTop{mball.bottom()-mbrick.top()};
+		float overlapBottom{mbrick.bottom()-mball.top()};
 
-	bool ballFromLeft{std::abs(overlapLeft) < std::abs(overlapRight)};
-	bool ballFromTop{std::abs(overlapTop) < std::abs(overlapBottom)};
+		bool ballFromLeft{std::abs(overlapLeft) < std::abs(overlapRight)};
+		bool ballFromTop{std::abs(overlapTop) < std::abs(overlapBottom)};
 
-	float minOverlapX{ballFromLeft ? overlapLeft : overlapRight};
-	float minOverlapY{ballFromTop ? overlapTop : overlapBottom};
+		float minOverlapX{ballFromLeft ? overlapLeft : overlapRight};
+		float minOverlapY{ballFromTop ? overlapTop : overlapBottom};
 
-	if(std::abs(minOverlapX) < std::abs(minOverlapY))
-	{
-		mball.velocity.x = ballFromLeft ? (mball.velocity.x) : -mball.velocity.x;
-	}
-	else
-	{
-		mball.velocity.y = ballFromTop ? (mball.velocity.y) : -mball.velocity.y;
+		if(std::abs(minOverlapX) < std::abs(minOverlapY))
+		{
+			mball.velocity.x = ballFromLeft ? (mball.velocity.x) : -mball.velocity.x;
+		}
+		else
+		{
+			mball.velocity.y = ballFromTop ? (mball.velocity.y) : -mball.velocity.y;
+		}
 	}
 }
 

@@ -42,10 +42,7 @@ public:
 		beepSound = std::make_shared<BallSound>(STRINGIZE_VALUE_OF(BEEPSOUNDFILE));
 	}
 
-	~Ball()
-	{
-
-	}
+	~Ball(){}
 
 	sf::Vector2f getVelocity(){ return velocity; }
 
@@ -104,6 +101,7 @@ private:
 	// This function keeps the ball inside the window and does not let it go out
 	void solveBoundCollisions() noexcept
 	{
+
         if(left() < 0)
         {
     		beepSound->playSound();

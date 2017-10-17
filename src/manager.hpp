@@ -22,8 +22,6 @@ private:
 	std::vector<std::shared_ptr<Entity>> entities; 					// the vector which contains the entities object
 	std::map< std::size_t,std::vector<Entity*> > groupedEntities;	// the map which contains the entities object and can be accessed by the hash value of the object as a key
 
-	std::vector<std::shared_ptr<SoundEntity>> soundentity;
-
 public:
 
 	int totalLives{3};												//Total number of lives the player has in the game
@@ -94,14 +92,52 @@ public:
 	}
 
 	template<typename T = Ball>
-	bool checkBallDropped()
+	 	bool checkBallDropped()
+	 	{
+	 		auto vector(getAll<T>());
+	 		if(vector.size() == 1)
+	 		{
+	 			return vector[0]->checkEntityDied();
+	 		}else{
+	 			return false;
+	 		}
+	}
+
+	template<typename T = Ball, typename U = Paddle>
+	void predictedPaddlePosition()
 	{
-		auto vector(getAll<T>());
-		if(vector.size() == 1)
+		// Be careful with the null pointers here. When entity containers are empty, casting will give null pointers
+		T* ballent;
+		U* padent;
+		auto ballvector(getAll<T>());
+		if(ballvector.size()>0)
+			ballent = dynamic_cast<T*>(ballvector[0]);
+
+		auto paddlevector(getAll<U>());
+		if(paddlevector.size()>0)
+			padent = dynamic_cast<U*>(paddlevector[0]);
+
+		if(padent != nullptr && ballent != nullptr)
 		{
-			return vector[0]->checkEntityDied();
-		}else{
-			return false;
+			if(ballent->getVelocity().y > 0)
+			{
+				if(ballent->getVelocity().x>0)
+				{
+					float c = ballent->shape.getPosition().y - ballent->shape.getPosition().x;
+					float intersectionX = ballent->shape.getPosition().y - c;
+					padent->movePaddlePosition(intersectionX,550);
+				}
+				if(ballent->getVelocity().x<0)
+				{
+					float c = ballent->shape.getPosition().y + ballent->shape.getPosition().x;
+					float intersectionX = (c - ballent->shape.getPosition().y) ;
+					padent->movePaddlePosition(intersectionX,550);
+				}
+			}
+		}
+		else
+		{
+			std::cout<<"ball and paddle are not there"<<std::endl;
 		}
 	}
 
