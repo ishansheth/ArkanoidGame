@@ -22,6 +22,7 @@
 #include "utility.hpp"
 #include <thread>
 #include <mutex>
+#include <functional>
 #include <condition_variable>
 
 #define STRINGIZE(x) #x
@@ -56,7 +57,7 @@ class Game
 
 	bool readyForupdate{false};
 	bool updateDone{false};
-	bool startAI{true};
+	volatile bool startAI{true};
 
 	int currentStage; /*current stage variable which will be incremented as the stage progresses*/
 
@@ -113,11 +114,11 @@ class Game
 				if(i%2==0)
 					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Cyan,1,currentStage,false);		// create brick entity which requires an update, so last parameter is false
 				else
-					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Magenta,1,currentStage,false);	// create brick entity which requires an update, so last parameter is false
+					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Magenta,3,currentStage,false);	// create brick entity which requires an update, so last parameter is false
 			}
 		}
 
-		manager.create<Ball>(wndWidth/2.f,wndHeight/2.f,false,-8.f,8.f);		// create the ball entity
+		manager.create<Ball>(wndWidth/2.f,wndHeight/2.f,false,-2.f,2.f);		// create the ball entity
 		manager.create<Paddle>(wndWidth/2.f,wndHeight-50,true);				// create the paddle entity
 		int offset = 0;															// offset between the lives circles
 		for(int i = 0; i < manager.totalLives; i++)
@@ -151,6 +152,7 @@ public:
 		showStageNumberScreen();
 		timeSeconds = 1000;														// showStageNumberScreen takes 2 seconds. so reset seconds count to zero after that, not before
 		createEntities();
+		Ball* mball = manager.getSingleEntity<Ball>();
 		std::cout<<"entities created"<<std::endl;
 	}
 
@@ -335,8 +337,8 @@ public:
 
 			if(manager.getAll<Brick>().empty())
 			{
-	    		std::unique_lock<std::mutex> lk(AImtx);
-				startAI = false;
+//	    		std::unique_lock<std::mutex> lk(AImtx);
+//				startAI = false;
 				textState.setString("You Won!!");
 				manager.draw(window);
 				window.draw(textState);
@@ -344,9 +346,9 @@ public:
 		    	state = GameState::inprocess;
 		    	currentStage++;
 		    	restart();
-		    	lk.unlock();
-		    	startAI = true;
-		    	AIcv.notify_one();
+//		    	lk.unlock();
+//		    	startAI = true;
+//		    	AIcv.notify_one();
 			}
 
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P) && !ifGamePaused)

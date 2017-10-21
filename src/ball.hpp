@@ -18,7 +18,6 @@ constexpr unsigned int wndWidth{800},wndHeight{600};
 
 class Ball : public Circle, public Entity
 {
-
 public:
 	static const sf::Color defColor;
 	static constexpr float defRadius{5.f};
@@ -96,6 +95,7 @@ public:
 		shape.move(velocity);
 
 	}
+
 
 private:
 	// This function keeps the ball inside the window and does not let it go out

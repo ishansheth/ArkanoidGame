@@ -37,7 +37,7 @@ public:
 	T& create(Args&&...args)
 	{
 		static_assert(std::is_base_of<Entity,T>::value,"T must be derived from the Entity interface");
-        auto uPtr(std::make_shared<T>(std::forward<Args>(args)...));
+        auto uPtr(std::make_shared<T>(std::forward<Args&&>(args)...));
         auto ptr(uPtr.get());
         groupedEntities[typeid(T).hash_code()].emplace_back(ptr);
         entities.emplace_back(uPtr);
@@ -119,25 +119,28 @@ public:
 
 		if(padent != nullptr && ballent != nullptr)
 		{
-			if(ballent->getVelocity().y > 0)
+			if(ballent->getVelocity().y > 0 && (ballent->getVelocity().x>0 || ballent->getVelocity().x<0))
 			{
+				auto ballX = ballent->shape.getPosition().x;
+				auto ballY= ballent->shape.getPosition().y;
+				float intersectionX;
 				if(ballent->getVelocity().x>0)
 				{
-					float c = ballent->shape.getPosition().y - ballent->shape.getPosition().x;
-					float intersectionX = ballent->shape.getPosition().y - c;
-					padent->movePaddlePosition(intersectionX,550);
+					float c = ballY - ballX;
+					intersectionX = 550 - c;
+					if(intersectionX < 800 && intersectionX > 0)
+					{
+						padent->movePaddlePosition(intersectionX-5,550);
+					}
 				}
 				if(ballent->getVelocity().x<0)
 				{
-					float c = ballent->shape.getPosition().y + ballent->shape.getPosition().x;
-					float intersectionX = (c - ballent->shape.getPosition().y) ;
-					padent->movePaddlePosition(intersectionX,550);
+					float c = ballY + ballX;
+					intersectionX = (c - 550);
+					if(intersectionX < 800 && intersectionX > 0)
+						padent->movePaddlePosition(intersectionX+5,550);
 				}
 			}
-		}
-		else
-		{
-			std::cout<<"ball and paddle are not there"<<std::endl;
 		}
 	}
 
