@@ -35,14 +35,10 @@ public:
 	{
 		processPlayerInputs();
 		shape.move(velocity);
-		std::cout<<shape.getPosition().x<<"  "<<shape.getPosition().y<<std::endl;
 	}
 
 	void movePaddlePosition(float mX,float mY)
 	{
-		//sf::Vector2f vec = shape.getPosition();
-
-//		shape.setPosition(mX,mY);
 
 		if(lastPosition.x != mX)
 		{
@@ -51,7 +47,8 @@ public:
 				sf::Vector2f vel{1,0};
 				while(abs(shape.getPosition().x-mX) != 0)
 				{
-					std::this_thread::sleep_for (std::chrono::microseconds(400));
+					// this delay is necessary to make movement of paddle observable
+					std::this_thread::sleep_for (std::chrono::microseconds(800));
 					shape.move(vel);
 				}
 				lastPosition = {mX,mY};
@@ -59,7 +56,8 @@ public:
 				sf::Vector2f vel{-1,0};
 				while(abs(shape.getPosition().x-mX) != 0)
 				{
-					std::this_thread::sleep_for (std::chrono::microseconds(400));
+					// this delay is necessary to make movement of paddle observable
+					std::this_thread::sleep_for (std::chrono::microseconds(800));
 					shape.move(vel);
 				}
 				lastPosition = {mX,mY};
@@ -85,11 +83,5 @@ private:
 		    velocity.x = 0;
 	}
 };
-
 const sf::Color Paddle::defColor{sf::Color::White};
-
-
-
-
-
 #endif /* SRC_PADDLE_HPP_ */

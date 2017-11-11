@@ -5,7 +5,4 @@ class StageManager
 {
 public:
 };
-
-
-
 #endif /* SRC_STAGEMANAGER_HPP_ */

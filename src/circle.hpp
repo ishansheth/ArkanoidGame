@@ -15,9 +15,4 @@ struct Circle
     float top() const noexcept { return y() - radius(); }
     float bottom() const noexcept { return y() + radius(); }
 };
-
-
-
-
-
 #endif /* SRC_CIRCLE_HPP_ */

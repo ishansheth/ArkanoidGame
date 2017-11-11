@@ -20,10 +20,12 @@
 #include "manager.hpp"
 #include "clock.hpp"
 #include "utility.hpp"
+#include "ModeSelect.hpp"
 #include <thread>
 #include <mutex>
 #include <functional>
 #include <condition_variable>
+#include <vector>
 
 #define STRINGIZE(x) #x
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
@@ -41,19 +43,15 @@ class Game
 
 	sf::Font liberationSans;	// loading the style of font using sf::Font which will be set in sf::Text
 
-	sf::Text textState /*text for displaying state("You won","You lost")*/,
-	textLives /*text for displaying the remaining lives on the top right corner*/,
-	textScore /*text for displaying the remaining lives on the top left corner*/,
-	textTime,
-	textStage /*text for displaying the stage of the game when it starts*/;
-
 	Manager manager; /*manager class which will take care of creating and destroying the entities*/
+
+	Clock clockComponent{0,10};
 
 	GameState state{GameState::inprocess}; /*enum variable for setting the state of the game*/
 
 	bool ifGamePaused{false}; /*bool to check if game is paused or not*/
 
-	std::shared_ptr<Clock> timerClock;
+	int gameMode = -1;
 
 	bool readyForupdate{false};
 	bool updateDone{false};
@@ -82,26 +80,6 @@ class Game
 
 	int gamescore; 																// Game score
 
-	/**
-	 * This function takes std::tuple as a parameter and sets the property of the font
-	 */
-	int setFontPropertiesCall(std::tuple<sf::Text&,float, float> textProp)
-	{
-		std::get<0>(textProp).setFont(liberationSans);
-		std::get<0>(textProp).setPosition(std::get<1>(textProp),std::get<2>(textProp));
-		std::get<0>(textProp).setCharacterSize(15.f);
-		std::get<0>(textProp).setColor(sf::Color::White);
-		return 1;																// Return value is required because initializer_list is of type "int" in setFontProperties
-	}
-
-	/**
-	 * Variadic template function which takes any number of arguments and calls the function "setFontPropertiesCall" for every passed argument
-	 */
-	template<typename...Ts>
-	void setFontProperties(Ts&&...args)
-	{
-		(void)std::initializer_list<int>{(setFontPropertiesCall(args),0)...};
-	}
 
 	void createEntities()
 	{
@@ -119,41 +97,78 @@ class Game
 		}
 
 		manager.create<Ball>(wndWidth/2.f,wndHeight/2.f,false,-2.f,2.f);		// create the ball entity
-		manager.create<Paddle>(wndWidth/2.f,wndHeight-50,true);				// create the paddle entity
+		if(gameMode == 0)
+			manager.create<Paddle>(wndWidth/2.f,wndHeight-50,true);				// create the paddle entity
+		else
+			manager.create<Paddle>(wndWidth/2.f,wndHeight-50,false);				// create the paddle entity
+
 		int offset = 0;															// offset between the lives circles
 		for(int i = 0; i < manager.totalLives; i++)
 		{
 			manager.create<lives>(720.f + offset,12.f,false);					// create the lives entity which is circles in the top right corner
 			offset += 2*lives::defRadius + 2.f;
 		}
-
+		manager.addFonts(
+				std::make_tuple(FontType::LIVESFONT,650.f,2.f),
+				std::make_tuple(FontType::SCOREFONT,2.f,2.f),
+				std::make_tuple(FontType::STAGEFONT,wndWidth/2.f - 70.f,wndHeight/2.f),
+				std::make_tuple(FontType::GAMEMODEFONT,wndWidth/2.f - 100.f,wndHeight/2.f),
+				std::make_tuple(FontType::CLOCKFONT,wndWidth/2.f - 100.f,2.f)
+		);
 	}
 
 public:
-	Game()
+	Game():manager(STRINGIZE_VALUE_OF(FILEPATH))
 	{
 		liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH)); 				// loading the font file from file system in sf::Font
 		gamescore = 0; 															// initial game score
 		currentStage = 1; 														// initial stage number
 		window.setFramerateLimit(60); 											// setting the frame rate for the window
+		window.setKeyRepeatEnabled(false);
 		timeSeconds = 0;
-		setFontProperties(														// This is call the to the function with variadic templates.
-				std::make_tuple(std::ref(textLives),650.f,2.f),					// It can take any number of tuples with type <sf::Text&,float,float>
-				std::make_tuple(std::ref(textScore),2.f,2.f),
-				std::make_tuple(std::ref(textStage),wndWidth/2.f - 70.f,wndHeight/2.f),
-				std::make_tuple(std::ref(textState),wndWidth/2.f - 100.f,wndHeight/2.f),
-				std::make_tuple(std::ref(textTime),wndWidth/2.f - 100.f,2.f)
-		);
+
 	}
 
 	void restart()
 	{
+		if(currentStage == 1)
+		{
+			window.clear(sf::Color::Black);
+			ModeSelect modesel(liberationSans);
+			modesel.showModeSelectWindow(window);
+			while(window.isOpen()){
+				sf::Event event;
+				while(window.pollEvent(event))
+				{
+					if(event.type == sf::Event::KeyPressed)
+					{
+						if(event.key.code == sf::Keyboard::Up)
+						{
+							modesel.changemode(window);
+						}
+						if(event.key.code == sf::Keyboard::Space)
+						{
+							gameMode = modesel.getSelectedMode();
+							break;
+						}
+					}
+					else if(event.type == sf::Event::Closed)
+					{
+						window.close();
+					}
+					window.display();
+				}
+				if(gameMode >= 0)
+				{
+					break;
+				}
+			}
+		}
+
 		manager.clear(); 														// clear all the entities from the container while restart
 		showStageNumberScreen();
 		timeSeconds = 1000;														// showStageNumberScreen takes 2 seconds. so reset seconds count to zero after that, not before
 		createEntities();
-		Ball* mball = manager.getSingleEntity<Ball>();
-		std::cout<<"entities created"<<std::endl;
 	}
 
 	void changeState(const GameState& s)
@@ -165,21 +180,12 @@ public:
 	void showStageNumberScreen()
 	{
 		window.clear(sf::Color::Black);
-		textStage.setString("Stage: " + std::to_string(currentStage));
-		window.draw(textStage);
+		manager.setFontString<FontType::STAGEFONT>("Stage: " + std::to_string(currentStage));
+		window.draw(manager.getSingleFont<FontType::STAGEFONT>());
     	window.display();
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 
-	void manageText()
-	{
-		textStage.setString("Stage: " + std::to_string(currentStage));		// setting the stage text string which will be shown in the begining for 2 seconds and then fades away.
-		while(1)															// while loop which set the stage string to null when other thread sets the string to non-null
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(2));
-			textStage.setString("");
-		}
-	}
 
 	void updateEntities()
 	{
@@ -208,33 +214,25 @@ public:
 		}
 	}
 
-	void showTime()
-		{
-		std::cout<<"timer thread started"<<std::endl;
-			while(1)
-			{
-				std::this_thread::sleep_for (std::chrono::seconds(1));			// This Delay is required because when spacebar is pressed, the bullet can not be shot immediately
-				timeSeconds--;
-				if(timeSeconds == 0) break;
-				textTime.setString(std::string("Time:" + std::to_string(static_cast<int>(timeSeconds)) + "          "+ "Stage:"+std::to_string(static_cast<int>(currentStage))));
-			}
-		}
+	void showTime(std::string timeString)
+	{
+		manager.setFontString<FontType::CLOCKFONT>(timeString + "          "+ "Stage:"+std::to_string(static_cast<int>(currentStage)));
+	}
 
 	void run()
 	{
+		clockComponent.start();
+		clockComponent.setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
 		mainEngineThread  = std::thread([this](){startEngineLoop();});
 		updateEntityThread = std::thread([this](){updateEntities();});
-		timerThread = std::thread([this](){showTime();});
-		AIModeThread = std::thread([this](){automateGame();});
+		if(gameMode == 0)
+		{
+			AIModeThread = std::thread([this](){automateGame();});
+			AIModeThread.join();
+		}
 		mainEngineThread.join();
 		updateEntityThread.join();
 		timerThread.join();
-		AIModeThread.join();
-
-		//      TODO: Make a timer class work, problem is it flickers the screen
-		//		timerClock = std::make_shared<Clock>(2,2);
-		//		timerClock->start(window);
-
 	}
 
 
@@ -244,9 +242,8 @@ public:
 		while(true)
 		{
 			window.clear(sf::Color::Black);
-			window.draw(textTime);
+			window.draw(manager.getSingleFont<FontType::CLOCKFONT>());
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) exit(0);
-			manager.checkBallDropped();
 			if(manager.checkBallDropped())
 			{
 				manager.handleBallDrop();
@@ -255,9 +252,9 @@ public:
 				{
 					window.clear(sf::Color::Black);
 					state = GameState::lost;
-					textState.setString("You Lost!!");
+					manager.setFontString<FontType::GAMEMODEFONT>("You Lost!!");
 			    	manager.draw(window);
-					window.draw(textState);
+					window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
 			    	window.display();
 				}else{
 					state = GameState::newlife;
@@ -271,8 +268,8 @@ public:
 			{
 				window.clear(sf::Color::Black);
 				state = GameState::lost;
-				textState.setString("You Lost!!");
-				window.draw(textState);
+				manager.setFontString<FontType::GAMEMODEFONT>("You Lost!!");
+				window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
 		    	window.display();
 			}
 
@@ -297,10 +294,10 @@ public:
 		    		updateCV.wait(lk,[this](){return updateDone;});
 		    		updateDone=false;
 		    	}
-		    	textScore.setString("Score:"+std::to_string(gamescore));
-                textLives.setString("Balls:");
-                window.draw(textScore);
-                window.draw(textLives);
+		    	manager.setFontString<FontType::SCOREFONT>("Score:"+std::to_string(gamescore));
+		    	manager.setFontString<FontType::LIVESFONT>("Balls:");
+				window.draw(manager.getSingleFont<FontType::SCOREFONT>());
+				window.draw(manager.getSingleFont<FontType::LIVESFONT>());
 		    	manager.refresh();
 		    	manager.draw(window);
 		    	window.display();
@@ -324,11 +321,10 @@ public:
 		    		updateDone=false;
 		    	}
 				spawedThread = std::thread([this](){changeState(GameState::inprocess);});
-
-		    	textScore.setString("Score:"+std::to_string(gamescore));
-                textLives.setString("Balls:");
-                window.draw(textScore);
-                window.draw(textLives);
+		    	manager.setFontString<FontType::SCOREFONT>("Score:"+std::to_string(gamescore));
+		    	manager.setFontString<FontType::LIVESFONT>("Balls:");
+				window.draw(manager.getSingleFont<FontType::SCOREFONT>());
+				window.draw(manager.getSingleFont<FontType::LIVESFONT>());
 		    	manager.refresh();
 		    	manager.draw(window);
 		    	window.display();
@@ -337,27 +333,23 @@ public:
 
 			if(manager.getAll<Brick>().empty())
 			{
-//	    		std::unique_lock<std::mutex> lk(AImtx);
-//				startAI = false;
-				textState.setString("You Won!!");
+				manager.setFontString<FontType::GAMEMODEFONT>("You Won!!");
+				window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
+
 				manager.draw(window);
-				window.draw(textState);
 		    	window.display();
 		    	state = GameState::inprocess;
 		    	currentStage++;
 		    	restart();
-//		    	lk.unlock();
-//		    	startAI = true;
-//		    	AIcv.notify_one();
 			}
 
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P) && !ifGamePaused)
 			{
 				state = GameState::paused;
-				textState.setString("Paused");
+				manager.setFontString<FontType::GAMEMODEFONT>("Paused");
+				window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
 				ifGamePaused = true;
 		    	manager.draw(window);
-				window.draw(textState);
 		    	window.display();
 			}
 
@@ -425,12 +417,10 @@ public:
 		    			}
 		    	}
 		    	);
-
-                textScore.setString("Score:"+std::to_string(gamescore));
-                textLives.setString("Balls:");
-
-                window.draw(textScore);
-                window.draw(textLives);
+		    	manager.setFontString<FontType::SCOREFONT>("Score:"+std::to_string(gamescore));
+		    	manager.setFontString<FontType::LIVESFONT>("Balls:");
+				window.draw(manager.getSingleFont<FontType::SCOREFONT>());
+				window.draw(manager.getSingleFont<FontType::LIVESFONT>());
 		    	manager.refresh();
 		    	manager.draw(window);
 		    	window.display();
@@ -441,8 +431,6 @@ public:
 				spawedThread.join();
 			}
 		}
-
 	}
 };
-
 #endif /* SRC_GAME_HPP_ */

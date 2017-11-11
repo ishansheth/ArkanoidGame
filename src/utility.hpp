@@ -65,5 +65,4 @@ void solveBallBrickCollision(Brick& mbrick, Ball& mball) noexcept
 		}
 	}
 }
-
 #endif /* SRC_UTILITY_HPP_ */

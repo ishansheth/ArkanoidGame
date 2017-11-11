@@ -8,67 +8,79 @@
 #ifndef SRC_CLOCK_HPP_
 #define SRC_CLOCK_HPP_
 
-#include "entity.hpp"
-#include<string>
-#include <thread>
-
 #define STRINGIZE(x) #x
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
+
+#include "entity.hpp"
+#include <string>
+#include <thread>
+#include <functional>
+#include <mutex>
+
 class Clock
 {
-int min;
-int sec;
-sf::Font liberationSans;
-sf::Text textTime;
-std::thread timerThread;
+	int min;
+	int sec;
+	sf::Font liberationSans;
+	std::mutex clockMutex;
+	std::function<void(std::string)> callbackFunc;
+	std::thread timerThread;
 
-public:
-	Clock(){}
-
-	~Clock()
-	{
-		if(timerThread.joinable())
+	public:
+		Clock(int a, int b):min(a),sec(b)
 		{
-			timerThread.join();
+			liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH));
 		}
-	}
 
-	Clock(int a_min,int a_sec):min(a_min),sec(a_sec)
-	{
-		liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH));
-		textTime.setCharacterSize(15.f);
-		textTime.setPosition(800/2.f - 100.f,2.f);
-		textTime.setFont(liberationSans);
-		textTime.setColor(sf::Color::White);
-	}
+		Clock(){}
 
-	void start(sf::RenderWindow & window)
-	{
-		timerThread =  std::thread(&Clock::update,this,std::ref(window));
-	}
-
-
-	void update(sf::RenderWindow & gameWindow)
-	{
-		while(1)
+		~Clock()
 		{
-			std::this_thread::sleep_for (std::chrono::seconds(1));
-			sec--;
-			if(sec == 0)
+			if(timerThread.joinable())
 			{
-				min--;
-				if(min >= 0)
-				{
-					sec = 59;
-				}
+				timerThread.join();
 			}
-			std::string timetext = std::to_string(min) + ":" + std::to_string(sec);
-			std::cout<<"in clock:"<<timetext<<std::endl;
-			textTime.setString(timetext);
-			gameWindow.draw(textTime);
-			gameWindow.display();
 		}
-	}
-};
 
+		void setCallback(std::function<void(std::string)> bindingFunc)
+		{
+			callbackFunc = bindingFunc;
+		}
+
+		void resetClock(int min,int sec)
+		{
+			this->min = min;
+			this->sec = sec;
+		}
+
+		void start()
+		{
+			timerThread =  std::thread(&Clock::update,this);
+		}
+
+		void update()
+		{
+			while(1)
+			{
+				std::this_thread::sleep_for (std::chrono::seconds(1));
+				sec--;
+				if(sec == 0)
+				{
+					min--;
+					if(min <= 0)
+					{
+						std::cout<<"time over"<<std::endl;
+						break;
+					}
+					else
+					{
+						sec = 59;
+					}
+				}
+				std::string timetext = std::to_string(min) + ":" + std::to_string(sec);
+				if(callbackFunc)
+					callbackFunc(timetext);
+			}
+		}
+};
 #endif /* SRC_CLOCK_HPP_ */

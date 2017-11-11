@@ -14,12 +14,6 @@ public:
 	virtual void update()=0;
 	virtual bool checkEntityDied()=0;
 	virtual void draw(sf::RenderWindow & window)=0;
-
 };
-
-Entity::~Entity()
-{}
-
-
-
+Entity::~Entity(){}
 #endif /* SRC_ENTITY_HPP_ */

@@ -22,7 +22,6 @@ public:
 		beepSound->setBuffer(*beepSoundBuffer);
 
 	}
-
     void playSound() override
 	{
 		beepSound->play();
@@ -37,11 +36,5 @@ public:
 	{
 		beepSound->setLoop(flag);
 	}
-
-
 };
-
-
-
-
 #endif /* SRC_BALLSOUND_HPP_ */

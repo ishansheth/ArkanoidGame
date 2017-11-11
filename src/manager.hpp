@@ -8,6 +8,7 @@
 #include "SoundEntity.hpp"
 #include "BallSound.hpp"
 #include "clock.hpp"
+#include "FontEntity.hpp"
 #include <map>
 #include <vector>
 #include <memory>
@@ -18,14 +19,17 @@
 class Manager
 {
 private:
-
 	std::vector<std::shared_ptr<Entity>> entities; 					// the vector which contains the entities object
 	std::map< std::size_t,std::vector<Entity*> > groupedEntities;	// the map which contains the entities object and can be accessed by the hash value of the object as a key
+	FontEntity fontsContainer;
 
 public:
 
 	int totalLives{3};												//Total number of lives the player has in the game
-	Manager(){}
+	Manager(std::string fontFilePath):fontsContainer(fontFilePath)
+	{
+
+	}
 
 	Manager(const Manager& otherManager) = delete;
 	Manager& operator=(const Manager& otherManager) = delete;
@@ -44,6 +48,23 @@ public:
         return *ptr;
 	}
 
+	template<typename...Ts>
+	void addFonts(Ts&&...args)
+	{
+		(void)std::initializer_list<int>{(fontsContainer.setFontProperties(args),0)...};
+	}
+
+	template<FontType T>
+	void setFontString(std::string str)
+	{
+		fontsContainer.setFontsString<T>(str);
+	}
+
+	template<FontType T>
+	auto getSingleFont()
+	{
+		return fontsContainer.getTypedFont<T>();
+	}
 	/**
 	 * The function to remove all the entites from the map and vector in which the destroyed variable is set to true
 	 */

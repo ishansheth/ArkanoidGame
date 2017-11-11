@@ -23,8 +23,4 @@ public:
 	virtual void setPlaybackLoop(bool flag)=0;
 	virtual ~SoundEntity(){}
 };
-
-
-
-
 #endif /* SRC_SOUNDENTITY_HPP_ */

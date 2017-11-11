@@ -10,12 +10,10 @@
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 
 constexpr unsigned int wndWidth{800},wndHeight{600};
-
 /**
  * Ball entity which is resonsible for the ball in the game.
  * This class takes care of the circle shape, its properties and its movement
  */
-
 class Ball : public Circle, public Entity
 {
 public:
@@ -40,9 +38,7 @@ public:
 		updateRequired = updateStatus;
 		beepSound = std::make_shared<BallSound>(STRINGIZE_VALUE_OF(BEEPSOUNDFILE));
 	}
-
 	~Ball(){}
-
 	sf::Vector2f getVelocity(){ return velocity; }
 
 	void setVelocity(float x,float y)
@@ -95,8 +91,6 @@ public:
 		shape.move(velocity);
 
 	}
-
-
 private:
 	// This function keeps the ball inside the window and does not let it go out
 	void solveBoundCollisions() noexcept
@@ -134,13 +128,7 @@ private:
 //		}
 
 	}
-
 };
-
 // Green color of the ball is set fixed as a static variable
 const sf::Color Ball::defColor{sf::Color::Green};
-
-
-
-
 #endif /* SRC_BALL_HPP_ */

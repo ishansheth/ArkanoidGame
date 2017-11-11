@@ -29,11 +29,6 @@ public:
 	}
 
 	virtual void update() override	{}
-
 	virtual bool checkEntityDied() override{}
 };
-
-
-
-
 #endif /* SRC_LIVES_HPP_ */

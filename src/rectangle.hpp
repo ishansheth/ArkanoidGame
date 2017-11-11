@@ -18,7 +18,4 @@ struct Rectangle
     float bottom() const noexcept { return y() + height() / 2.f; }
 };
 
-
-
-
 #endif /* SRC_RECTANGLE_HPP_ */
