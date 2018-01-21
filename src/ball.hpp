@@ -5,9 +5,8 @@
 #include "circle.hpp"
 #include "SoundEntity.hpp"
 #include "BallSound.hpp"
+#include "macros.hpp"
 #include <memory>
-#define STRINGIZE(x) #x
-#define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 
 constexpr unsigned int wndWidth{800},wndHeight{600};
 /**

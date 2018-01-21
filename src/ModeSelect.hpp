@@ -9,6 +9,7 @@
 #define SRC_MODESELECT_HPP_
 
 #include "circle.hpp"
+#include <vector>
 
 class ModeSelect : public Circle
 {
@@ -54,9 +55,14 @@ public:
 	void changemode(sf::RenderWindow& window)
 	{
 		window.clear(sf::Color::Black);
-		if(shape.getPosition() == autoTextPosition){shape.setPosition(manualTextPosition);}
+		if(shape.getPosition() == autoTextPosition)
+		{
+			shape.setPosition(manualTextPosition);
+		}
 		else
-		{shape.setPosition(autoTextPosition);}
+		{
+			shape.setPosition(autoTextPosition);
+		}
 		shape.setRadius(5.f);
 		shape.setFillColor(sf::Color::Red);
 		shape.setOrigin(5.f,5.f);

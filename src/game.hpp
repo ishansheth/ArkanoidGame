@@ -21,14 +21,13 @@
 #include "clock.hpp"
 #include "utility.hpp"
 #include "ModeSelect.hpp"
+#include "macros.hpp"
 #include <thread>
 #include <mutex>
 #include <functional>
 #include <condition_variable>
 #include <vector>
 
-#define STRINGIZE(x) #x
-#define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 /**
  * Game class: It contains the main game engine loop thread which runs the game.
  * It has a manager as a member variable which takes care of generating the entities and destroying them.
@@ -45,7 +44,7 @@ class Game
 
 	Manager manager; /*manager class which will take care of creating and destroying the entities*/
 
-	Clock clockComponent{0,10};
+	Clock clockComponent;
 
 	GameState state{GameState::inprocess}; /*enum variable for setting the state of the game*/
 
@@ -56,6 +55,7 @@ class Game
 	bool readyForupdate{false};
 	bool updateDone{false};
 	volatile bool startAI{true};
+	bool timeUp{false};
 
 	int currentStage; /*current stage variable which will be incremented as the stage progresses*/
 
@@ -68,7 +68,6 @@ class Game
 	std::condition_variable updateCV,AIcv;
 	std::mutex mtx,AImtx;
 
-	double timeSeconds;
 	static constexpr int brickCountX{11};  										// No of bricks in the X direction, no of columns, 11
 	static constexpr int brickCountY{4};   										// No of bricks in the Y direction, no of rows , 4
 	static constexpr int brickStartCol{1}; 										// start column of the bricks, 1
@@ -76,10 +75,9 @@ class Game
 	static constexpr int brickSpacing{6};  										// spacing between the bricks
 	static constexpr float brickOffsetX{22.f}; 									// brick offset in the X direction
 
-	sf::RenderWindow window{{wndWidth,wndHeight},"Arkanoid - 2"}; 				//Game window with width,height and name string
+	sf::RenderWindow window; 				//Game window with width,height and name string
 
 	int gamescore; 																// Game score
-
 
 	void createEntities()
 	{
@@ -90,7 +88,7 @@ class Game
 				float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
 				float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
 				if(i%2==0)
-					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Cyan,1,currentStage,false);		// create brick entity which requires an update, so last parameter is false
+					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);		// create brick entity which requires an update, so last parameter is false
 				else
 					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Magenta,3,currentStage,false);	// create brick entity which requires an update, so last parameter is false
 			}
@@ -118,15 +116,13 @@ class Game
 	}
 
 public:
-	Game():manager(STRINGIZE_VALUE_OF(FILEPATH))
+	Game():manager(STRINGIZE_VALUE_OF(FILEPATH)),window(sf::VideoMode(wndWidth,wndHeight),"Arkanoid - 2")
 	{
 		liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH)); 				// loading the font file from file system in sf::Font
 		gamescore = 0; 															// initial game score
 		currentStage = 1; 														// initial stage number
 		window.setFramerateLimit(60); 											// setting the frame rate for the window
 		window.setKeyRepeatEnabled(false);
-		timeSeconds = 0;
-
 	}
 
 	void restart()
@@ -142,7 +138,7 @@ public:
 				{
 					if(event.type == sf::Event::KeyPressed)
 					{
-						if(event.key.code == sf::Keyboard::Up)
+						if(event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::Down)
 						{
 							modesel.changemode(window);
 						}
@@ -165,9 +161,8 @@ public:
 			}
 		}
 
-		manager.clear(); 														// clear all the entities from the container while restart
 		showStageNumberScreen();
-		timeSeconds = 1000;														// showStageNumberScreen takes 2 seconds. so reset seconds count to zero after that, not before
+		manager.clear(); 														// clear all the entities from the container while restart
 		createEntities();
 	}
 
@@ -179,7 +174,11 @@ public:
 
 	void showStageNumberScreen()
 	{
+		std::cout<<"showing the stage number screen"<<std::endl;
 		window.clear(sf::Color::Black);
+		manager.addFonts(
+				std::make_tuple(FontType::STAGEFONT,wndWidth/2.f - 70.f,wndHeight/2.f));
+
 		manager.setFontString<FontType::STAGEFONT>("Stage: " + std::to_string(currentStage));
 		window.draw(manager.getSingleFont<FontType::STAGEFONT>());
     	window.display();
@@ -216,13 +215,19 @@ public:
 
 	void showTime(std::string timeString)
 	{
-		manager.setFontString<FontType::CLOCKFONT>(timeString + "          "+ "Stage:"+std::to_string(static_cast<int>(currentStage)));
+		if(timeString == "0:1")
+		{
+			std::cout<<"time is up";
+			timeUp = true;
+		}
+		else
+		{
+			manager.setFontString<FontType::CLOCKFONT>(timeString + "          "+ "Stage:"+std::to_string(static_cast<int>(currentStage)));
+		}
 	}
 
 	void run()
 	{
-		clockComponent.start();
-		clockComponent.setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
 		mainEngineThread  = std::thread([this](){startEngineLoop();});
 		updateEntityThread = std::thread([this](){updateEntities();});
 		if(gameMode == 0)
@@ -230,11 +235,15 @@ public:
 			AIModeThread = std::thread([this](){automateGame();});
 			AIModeThread.join();
 		}
+		else
+		{
+			clockComponent.start(0,10);
+			clockComponent.setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
+		}
 		mainEngineThread.join();
 		updateEntityThread.join();
 		timerThread.join();
 	}
-
 
 	void startEngineLoop()
 	{
@@ -264,7 +273,7 @@ public:
 			}
 
 			// When time is up, you lost the game
-			if(timeSeconds == 0)
+			if(timeUp)
 			{
 				window.clear(sf::Color::Black);
 				state = GameState::lost;
@@ -301,7 +310,6 @@ public:
 		    	manager.refresh();
 		    	manager.draw(window);
 		    	window.display();
-
 			}
 
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && state == GameState::newlife)
@@ -328,14 +336,12 @@ public:
 		    	manager.refresh();
 		    	manager.draw(window);
 		    	window.display();
-
 			}
 
 			if(manager.getAll<Brick>().empty())
 			{
 				manager.setFontString<FontType::GAMEMODEFONT>("You Won!!");
 				window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
-
 				manager.draw(window);
 		    	window.display();
 		    	state = GameState::inprocess;

@@ -5,6 +5,8 @@
 #include "rectangle.hpp"
 #include <thread>
 #include <chrono>
+#define STRINGIZE(x) #x
+#define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 
 /**
  * This class shows the bricks entities and it is responsible to display the bricks on the window
@@ -12,7 +14,7 @@
 class Brick : public Rectangle,public Entity
 {
 	bool flingFlag{false};
-
+	sf::Texture brickTexture;
 public:
 	sf::Color defColor;
 	static constexpr float defHeight{20.f};
@@ -36,6 +38,8 @@ public:
 		shape.setOutlineColor(sf::Color::White);
 		shape.setOutlineThickness(2.f);
 		shape.setOrigin(defWidth/2.f,defHeight/2.f);
+		brickTexture.loadFromFile(STRINGIZE_VALUE_OF(BRICKTEXTUREIMAGEFILE));
+		shape.setTexture(&brickTexture,false);
 		hitsRequired = strength = hits;
 		updateRequired = updateStatus;
 		stagecount = currentstagecount;

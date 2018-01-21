@@ -69,8 +69,12 @@ public:
 	{
 		return textMap[T];
 	}
+
+	template<FontType T>
+	void draw(sf::RenderWindow& window)
+	{
+		window.draw(textMap[T]);
+	}
+
 };
-
-
-
 #endif /* SRC_FONTENTITY_HPP_ */

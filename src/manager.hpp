@@ -178,17 +178,7 @@ public:
 		ballentity->destroyed = true;
 
 		auto vector(getAll<lives>());
-		auto vectorIterator = vector.rbegin();
-		for(;vectorIterator != vector.rend();++vectorIterator)
-		{
-			if((*vectorIterator)->destroyed)
-			{
-				continue;
-			}else{
-				(*vectorIterator)->destroyed = true;
-				break;
-			}
-		}
+		vector.back()->destroyed = true;
 	}
 
 	void update()

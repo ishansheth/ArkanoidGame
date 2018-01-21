@@ -8,9 +8,7 @@
 #ifndef SRC_CLOCK_HPP_
 #define SRC_CLOCK_HPP_
 
-#define STRINGIZE(x) #x
-#define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
-
+#include "macros.hpp"
 #include "entity.hpp"
 #include <string>
 #include <thread>
@@ -22,17 +20,16 @@ class Clock
 	int min;
 	int sec;
 	sf::Font liberationSans;
-	std::mutex clockMutex;
+//	std::mutex clockMutex;
 	std::function<void(std::string)> callbackFunc;
 	std::thread timerThread;
 
 	public:
-		Clock(int a, int b):min(a),sec(b)
+		Clock()
 		{
 			liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH));
 		}
 
-		Clock(){}
 
 		~Clock()
 		{
@@ -53,8 +50,9 @@ class Clock
 			this->sec = sec;
 		}
 
-		void start()
+		void start(int a, int b)
 		{
+			min = a;sec = b;
 			timerThread =  std::thread(&Clock::update,this);
 		}
 
