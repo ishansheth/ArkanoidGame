@@ -176,9 +176,7 @@ public:
 	{
 		std::cout<<"showing the stage number screen"<<std::endl;
 		window.clear(sf::Color::Black);
-		manager.addFonts(
-				std::make_tuple(FontType::STAGEFONT,wndWidth/2.f - 70.f,wndHeight/2.f));
-
+		manager.addFonts(std::make_tuple(FontType::STAGEFONT,wndWidth/2.f - 70.f,wndHeight/2.f));
 		manager.setFontString<FontType::STAGEFONT>("Stage: " + std::to_string(currentStage));
 		window.draw(manager.getSingleFont<FontType::STAGEFONT>());
     	window.display();
