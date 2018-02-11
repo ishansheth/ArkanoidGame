@@ -8,7 +8,6 @@
 #include "macros.hpp"
 #include <memory>
 
-constexpr unsigned int wndWidth{800},wndHeight{600};
 /**
  * Ball entity which is resonsible for the ball in the game.
  * This class takes care of the circle shape, its properties and its movement
@@ -64,7 +63,7 @@ public:
 
 	virtual bool checkEntityDied() override
 	{
-		return(bottom() > wndHeight);
+		return(bottom() > WNDHEIGHT);
 	}
 
 	/**
@@ -78,7 +77,7 @@ public:
 			velocity.x = -8.f;
 			velocity.y = 0;
 		}
-        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) && right() < wndWidth)
+        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) && right() < WNDWIDTH)
         {
 		    velocity.x = 8.f;
         }
@@ -100,7 +99,7 @@ private:
     		beepSound->playSound();
             velocity.x = -velocity.x;
         }
-        else if(right() > wndWidth)
+        else if(right() > WNDWIDTH)
         {
     		beepSound->playSound();
             velocity.x = -velocity.x;
@@ -111,7 +110,7 @@ private:
             velocity.y = -velocity.y;
     		beepSound->playSound();
         }
-        else if(bottom() > wndHeight)
+        else if(bottom() > WNDHEIGHT)
         {
             velocity.y = -velocity.y;
     		beepSound->playSound();

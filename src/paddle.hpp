@@ -19,7 +19,7 @@ public:
 	sf::Vector2f lastPosition;
 
 public:
-	Paddle(float mX,float mY,bool updateStatus)
+	Paddle(float mX,float mY,bool updateStatus):angle(0)
 	{
 		shape.setPosition(mX,mY);
 		lastPosition = {mX,mY};
@@ -75,9 +75,10 @@ public:
 private:
 	void processPlayerInputs()
 	{
+
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) && left() > 0)
 			velocity.x = -defVelocity;
-        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) && right() < wndWidth)
+        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) && right() < WNDWIDTH)
 		    velocity.x = defVelocity;
         else
 		    velocity.x = 0;

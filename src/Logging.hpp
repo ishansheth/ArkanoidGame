@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <string>
+#include <type_traits>
 
 enum typelog {
     DEBUG,
@@ -13,13 +14,7 @@ enum typelog {
 
 class LOG {
 public:
-    LOG() : m_log(std::cout.rdbuf()) {}
-
-    LOG(typelog type):m_log(std::cout.rdbuf())
-    {
-    	msglevel = type;
-    }
-
+    LOG() : m_log(std::cout.rdbuf()),m_err(std::cerr.rdbuf()) {}
     ~LOG()
     {
         if(opened) {
@@ -30,10 +25,20 @@ public:
 
     template<class T>
     std::ostream& operator<<(const T &msg) {
-        m_log<<("["+getLabel(msglevel)+"]")<<" "<< current_date()<<"  "<<msg;
         opened = true;
-        return m_log;
+    	if(std::is_same<T,typelog>::value)
+    	{
+    		if(msg != DEBUG)
+    		{
+                m_log<<current_date()<<"  "<<("["+getLabel(msg)+"]");
+                return m_log;
+    		}else{
+                m_err<<current_date()<<"  "<<("["+getLabel(msg)+"]");
+                return m_err;
+    		}
+    	}
     }
+
 private:
     bool opened = false;
     typelog msglevel = DEBUG;
@@ -52,9 +57,10 @@ private:
     	    struct tm tstruct;
     	    char buf[40];
     	    tstruct = *localtime(&now);
-    	    strftime(buf, sizeof(buf), "%H:%M:%S", &tstruct);
+    	    strftime(buf, sizeof(buf), "%D %H:%M:%S", &tstruct);
     	    return buf;
     	}
     std::ostream m_log;
+    std::ostream m_err;
 };
 #endif /* SRC_LOGGING_HPP_ */

@@ -20,7 +20,7 @@
 #include "manager.hpp"
 #include "clock.hpp"
 #include "utility.hpp"
-#include "ModeSelect.hpp"
+#include "MenuClass.hpp"
 #include "macros.hpp"
 #include <thread>
 #include <mutex>
@@ -44,8 +44,6 @@ class Game
 
 	Manager manager; /*manager class which will take care of creating and destroying the entities*/
 
-	Clock clockComponent;
-
 	GameState state{GameState::inprocess}; /*enum variable for setting the state of the game*/
 
 	bool ifGamePaused{false}; /*bool to check if game is paused or not*/
@@ -59,19 +57,23 @@ class Game
 
 	int currentStage; /*current stage variable which will be incremented as the stage progresses*/
 
+	sf::Event windowEvent;
+
+	std::unique_ptr<Clock> clockPtr;
+
 	/*threads responsible for several tasks related to entities*/
 	std::thread spawedThread;
 	std::thread mainEngineThread;
 	std::thread updateEntityThread;
-	std::thread timerThread;
 	std::thread AIModeThread;
+	std::thread timerThread;
 	std::condition_variable updateCV,AIcv;
 	std::mutex mtx,AImtx;
 
-	static constexpr int brickCountX{11};  										// No of bricks in the X direction, no of columns, 11
-	static constexpr int brickCountY{4};   										// No of bricks in the Y direction, no of rows , 4
-	static constexpr int brickStartCol{1}; 										// start column of the bricks, 1
-	static constexpr int brickStartRow{2}; 										// start row of the bricks, 2
+	static constexpr int brickCountX{5};  										// No of bricks in the X direction, no of columns, 11
+	static constexpr int brickCountY{5};   										// No of bricks in the Y direction, no of rows , 4
+	static constexpr int brickStartCol{5}; 										// start column of the bricks, 1
+	static constexpr int brickStartRow{8}; 										// start row of the bricks, 2
 	static constexpr int brickSpacing{6};  										// spacing between the bricks
 	static constexpr float brickOffsetX{22.f}; 									// brick offset in the X direction
 
@@ -81,6 +83,7 @@ class Game
 
 	void createEntities()
 	{
+		std::cout<<"creating entities"<<std::endl;
 		for(int i = 0;i < brickCountX;i++)										// put bricks
 		{
 			for(int j = 0;j < brickCountY;j++)
@@ -94,11 +97,11 @@ class Game
 			}
 		}
 
-		manager.create<Ball>(wndWidth/2.f,wndHeight/2.f,false,-2.f,2.f);		// create the ball entity
+		manager.create<Ball>(WNDWIDTH/2.f,WNDHEIGHT/2.f,false,-2.f,2.f);		// create the ball entity
 		if(gameMode == 0)
-			manager.create<Paddle>(wndWidth/2.f,wndHeight-50,true);				// create the paddle entity
+			manager.create<Paddle>(WNDWIDTH/2.f,WNDHEIGHT-50,true);				// create the paddle entity
 		else
-			manager.create<Paddle>(wndWidth/2.f,wndHeight-50,false);				// create the paddle entity
+			manager.create<Paddle>(WNDWIDTH/2.f,WNDHEIGHT-50,false);				// create the paddle entity
 
 		int offset = 0;															// offset between the lives circles
 		for(int i = 0; i < manager.totalLives; i++)
@@ -109,14 +112,14 @@ class Game
 		manager.addFonts(
 				std::make_tuple(FontType::LIVESFONT,650.f,2.f),
 				std::make_tuple(FontType::SCOREFONT,2.f,2.f),
-				std::make_tuple(FontType::STAGEFONT,wndWidth/2.f - 70.f,wndHeight/2.f),
-				std::make_tuple(FontType::GAMEMODEFONT,wndWidth/2.f - 100.f,wndHeight/2.f),
-				std::make_tuple(FontType::CLOCKFONT,wndWidth/2.f - 100.f,2.f)
+				std::make_tuple(FontType::STAGEFONT,WNDWIDTH/2.f +100.f,2.f),
+				std::make_tuple(FontType::CLOCKFONT,WNDWIDTH/2.f - 100.f,2.f),
+				std::make_tuple(FontType::GAMEMODEFONT,WNDWIDTH/2.f - 100.f,WNDHEIGHT/2.f)
 		);
 	}
 
 public:
-	Game():manager(STRINGIZE_VALUE_OF(FILEPATH)),window(sf::VideoMode(wndWidth,wndHeight),"Arkanoid - 2")
+	Game():manager(STRINGIZE_VALUE_OF(FILEPATH)),window(sf::VideoMode(WNDWIDTH,WNDHEIGHT),"Arkanoid - 2")
 	{
 		liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH)); 				// loading the font file from file system in sf::Font
 		gamescore = 0; 															// initial game score
@@ -130,27 +133,28 @@ public:
 		if(currentStage == 1)
 		{
 			window.clear(sf::Color::Black);
-			ModeSelect modesel(liberationSans);
+			MenuManager<2> modesel(liberationSans,WNDWIDTH/2-100,WNDHEIGHT/2-50);
+			modesel.setOptionsString("AI Mode","Manual Mode");
 			modesel.showModeSelectWindow(window);
 			while(window.isOpen()){
-				sf::Event event;
-				while(window.pollEvent(event))
+				while(window.pollEvent(windowEvent))
 				{
-					if(event.type == sf::Event::KeyPressed)
+					if(windowEvent.type == sf::Event::KeyPressed)
 					{
-						if(event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::Down)
+						if(windowEvent.key.code == sf::Keyboard::Up || windowEvent.key.code == sf::Keyboard::Down)
 						{
-							modesel.changemode(window);
+							modesel.changemode(window,windowEvent);
 						}
-						if(event.key.code == sf::Keyboard::Space)
+						if(windowEvent.key.code == sf::Keyboard::Space)
 						{
 							gameMode = modesel.getSelectedMode();
 							break;
 						}
 					}
-					else if(event.type == sf::Event::Closed)
+					else if(windowEvent.type == sf::Event::Closed)
 					{
 						window.close();
+						exit(0);
 					}
 					window.display();
 				}
@@ -160,27 +164,33 @@ public:
 				}
 			}
 		}
-
-		showStageNumberScreen();
-		manager.clear(); 														// clear all the entities from the container while restart
 		createEntities();
+		showStageNumberScreen();
+		if(gameMode != 0)
+		{
+			clockPtr.reset();
+			clockPtr.reset(new Clock());
+			clockPtr->setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
+			clockPtr->start(10,10);
+		}
+
 	}
 
 	void changeState(const GameState& s)
 	{
-		std::this_thread::sleep_for (std::chrono::milliseconds(200));			// This Delay is required because when spacebar is pressed, the bullet can not be shot immediately
+		std::this_thread::sleep_for (std::chrono::milliseconds(100));			// This Delay is required because when spacebar is pressed, the bullet can not be shot immediately
 		state = s;
 	}
 
 	void showStageNumberScreen()
 	{
-		std::cout<<"showing the stage number screen"<<std::endl;
+		std::cout<<"showing stage number screen"<<std::endl;
 		window.clear(sf::Color::Black);
-		manager.addFonts(std::make_tuple(FontType::STAGEFONT,wndWidth/2.f - 70.f,wndHeight/2.f));
+		manager.addFonts(std::make_tuple(FontType::STAGEFONT,WNDWIDTH/2.f - 70.f,WNDHEIGHT/2.f));
 		manager.setFontString<FontType::STAGEFONT>("Stage: " + std::to_string(currentStage));
 		window.draw(manager.getSingleFont<FontType::STAGEFONT>());
     	window.display();
-		std::this_thread::sleep_for(std::chrono::seconds(2));
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 
 
@@ -215,12 +225,11 @@ public:
 	{
 		if(timeString == "0:1")
 		{
-			std::cout<<"time is up";
 			timeUp = true;
 		}
 		else
 		{
-			manager.setFontString<FontType::CLOCKFONT>(timeString + "          "+ "Stage:"+std::to_string(static_cast<int>(currentStage)));
+			manager.setFontString<FontType::CLOCKFONT>(timeString);
 		}
 	}
 
@@ -235,12 +244,11 @@ public:
 		}
 		else
 		{
-			clockComponent.start(0,10);
-			clockComponent.setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
+//			clockComponent.setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
+//			clockComponent.start(0,10);
 		}
 		mainEngineThread.join();
 		updateEntityThread.join();
-		timerThread.join();
 	}
 
 	void startEngineLoop()
@@ -249,7 +257,10 @@ public:
 		while(true)
 		{
 			window.clear(sf::Color::Black);
+			manager.setFontString<FontType::STAGEFONT>("Stage:"+std::to_string(static_cast<int>(currentStage)));
+
 			window.draw(manager.getSingleFont<FontType::CLOCKFONT>());
+			window.draw(manager.getSingleFont<FontType::STAGEFONT>());
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) exit(0);
 			if(manager.checkBallDropped())
 			{
@@ -273,6 +284,7 @@ public:
 			// When time is up, you lost the game
 			if(timeUp)
 			{
+
 				window.clear(sf::Color::Black);
 				state = GameState::lost;
 				manager.setFontString<FontType::GAMEMODEFONT>("You Lost!!");
@@ -344,6 +356,9 @@ public:
 		    	window.display();
 		    	state = GameState::inprocess;
 		    	currentStage++;
+		    	manager.clear();
+//		    	manager.clearFonts();
+		    	clockPtr->killTimer();
 		    	restart();
 			}
 

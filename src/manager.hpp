@@ -94,6 +94,11 @@ public:
 		entities.clear();
 	}
 
+	void clearFonts()
+	{
+		fontsContainer.clear();
+	}
+
 	// The utility function which can be used to get the certain kind of entity from the map
 	template<typename T>
 	std::vector<Entity*> getAll()

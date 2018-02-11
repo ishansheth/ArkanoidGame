@@ -76,5 +76,9 @@ public:
 		window.draw(textMap[T]);
 	}
 
+	void clear()
+	{
+		textMap.clear();
+	}
 };
 #endif /* SRC_FONTENTITY_HPP_ */
