@@ -2,19 +2,10 @@
 #include <X11/Xlib.h>
 #include "Logging.hpp"
 
-/**
- * main function
- */
-
-
-
-
 int main()
 {
 	XInitThreads();
 	LOG()<<DEBUG<<"main game execution started";
-
-
 
 	Game game;
 	game.restart();

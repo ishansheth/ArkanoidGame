@@ -95,31 +95,6 @@ private:
 		}
 	}
 };
+
 //const sf::Color Brick::defColor{sf::Color::Red};
-
-// Example of user defined drawable entity
-class Square : public sf::Drawable,public sf::Transformable
-{
-public:
-	Square(int x,int y,int width):m_SquareVertices(sf::Quads,4)
-	{
-
-		m_SquareVertices[0].position = sf::Vector2f(x,y);
-		m_SquareVertices[1].position = sf::Vector2f(y,y+width);
-		m_SquareVertices[2].position = sf::Vector2f(x+width,y+width);
-		m_SquareVertices[3].position = sf::Vector2f(x+width,y);
-	}
-
-private:
-	virtual void draw (sf::RenderTarget& target, sf::RenderStates states) const
-	{
-		states.transform *= getTransform();
-		states.texture = &m_texture;
-		target.draw(m_SquareVertices,states);
-	}
-	sf::VertexArray m_SquareVertices;
-	sf::Texture m_texture;
-
-};
-
 #endif /* SRC_BRICK_HPP_ */

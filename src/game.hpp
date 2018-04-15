@@ -70,10 +70,10 @@ class Game
 	std::condition_variable updateCV,AIcv;
 	std::mutex mtx,AImtx;
 
-	static constexpr int brickCountX{5};  										// No of bricks in the X direction, no of columns, 11
+	static constexpr int brickCountX{7};  										// No of bricks in the X direction, no of columns, 11
 	static constexpr int brickCountY{5};   										// No of bricks in the Y direction, no of rows , 4
-	static constexpr int brickStartCol{5}; 										// start column of the bricks, 1
-	static constexpr int brickStartRow{8}; 										// start row of the bricks, 2
+	static constexpr int brickStartCol{1}; 										// start column of the bricks, 1
+	static constexpr int brickStartRow{2}; 										// start row of the bricks, 2
 	static constexpr int brickSpacing{6};  										// spacing between the bricks
 	static constexpr float brickOffsetX{22.f}; 									// brick offset in the X direction
 
@@ -99,9 +99,9 @@ class Game
 
 		manager.create<Ball>(WNDWIDTH/2.f,WNDHEIGHT/2.f,false,-2.f,2.f);		// create the ball entity
 		if(gameMode == 0)
-			manager.create<Paddle>(WNDWIDTH/2.f,WNDHEIGHT-50,true);				// create the paddle entity
+			manager.create<Paddle>(WNDWIDTH/2.f,550,true);				// create the paddle entity
 		else
-			manager.create<Paddle>(WNDWIDTH/2.f,WNDHEIGHT-50,false);				// create the paddle entity
+			manager.create<Paddle>(WNDWIDTH/2.f,550,false);				// create the paddle entity
 
 		int offset = 0;															// offset between the lives circles
 		for(int i = 0; i < manager.totalLives; i++)
@@ -348,19 +348,18 @@ public:
 		    	window.display();
 			}
 
-			if(manager.getAll<Brick>().empty())
-			{
-				manager.setFontString<FontType::GAMEMODEFONT>("You Won!!");
-				window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
-				manager.draw(window);
-		    	window.display();
-		    	state = GameState::inprocess;
-		    	currentStage++;
-		    	manager.clear();
-//		    	manager.clearFonts();
-		    	clockPtr->killTimer();
-		    	restart();
-			}
+//			if(manager.getAll<Brick>().empty())
+//			{
+//				manager.setFontString<FontType::GAMEMODEFONT>("You Won!!");
+//				window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
+//				manager.draw(window);
+//		    	window.display();
+//		    	state = GameState::inprocess;
+//		    	currentStage++;
+//		    	manager.clear();
+//		    	clockPtr->killTimer();
+//		    	restart();
+//			}
 
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P) && !ifGamePaused)
 			{

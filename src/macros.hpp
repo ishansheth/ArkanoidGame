@@ -11,8 +11,8 @@
 #define STRINGIZE(x) #x
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 
-#define BRICKHEIGHT 5.f
-#define BRICKWIDTH 30.f
+#define BRICKHEIGHT 20.f
+#define BRICKWIDTH 70.f
 #define WNDHEIGHT 600
 #define WNDWIDTH 600
 

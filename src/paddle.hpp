@@ -18,8 +18,21 @@ public:
 	sf::Vector2f velocity;
 	sf::Vector2f lastPosition;
 
+	int circularPathRadius{300};
+
+	float angle;
+	float rotationAngle;
+
+	struct circleCoordinate
+	{
+		double x;
+		double y;
+		void setX(int a){x = a;}
+		void setY(int b){y = b;}
+	};
+
 public:
-	Paddle(float mX,float mY,bool updateStatus):angle(0)
+	Paddle(float mX,float mY,bool updateStatus):angle(0),rotationAngle(0)
 	{
 		shape.setPosition(mX,mY);
 		lastPosition = {mX,mY};
@@ -33,6 +46,7 @@ public:
 
 	virtual void update() override
 	{
+//		rotatePaddle();
 		processPlayerInputs();
 		shape.move(velocity);
 	}
@@ -75,13 +89,37 @@ public:
 private:
 	void processPlayerInputs()
 	{
-
 		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) && left() > 0)
 			velocity.x = -defVelocity;
         else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) && right() < WNDWIDTH)
 		    velocity.x = defVelocity;
         else
 		    velocity.x = 0;
+	}
+
+	void rotatePaddle()
+	{
+		if(angle > 360.f) angle = 0.0;
+
+		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) ){
+			velocity = {(3.141f/180.f)*200*std::cos((3.141f/180.f)*angle),
+					(3.141f/180.f)*30*std::sin((3.141f/180.f)*angle)};
+			angle = angle+1;
+			std::cout<<"angle:"<<angle<<"    velocity:"<<velocity.x<<" "<<velocity.y<<std::endl;
+		}else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)){
+			velocity = {(-1)*(3.141f/180.f)*circularPathRadius*std::cos((3.141f/180.f)*angle),
+					(-1)*(3.141f/180.f)*circularPathRadius*std::sin((3.141f/180.f)*angle)};
+			angle = angle-1;
+			std::cout<<"angle:"<<angle<<"    velocity:"<<velocity.x<<" "<<velocity.y<<std::endl;
+		}else{
+			velocity = {0,0};
+		}
+		shape.setRotation(angle);
+	}
+
+	void circlePaddle()
+	{
+
 	}
 };
 const sf::Color Paddle::defColor{sf::Color::White};

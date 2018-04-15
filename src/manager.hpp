@@ -9,6 +9,7 @@
 #include "BallSound.hpp"
 #include "clock.hpp"
 #include "FontEntity.hpp"
+#include "particlesystem.hpp"
 #include <map>
 #include <vector>
 #include <memory>
@@ -22,13 +23,15 @@ private:
 	std::vector<std::shared_ptr<Entity>> entities; 					// the vector which contains the entities object
 	std::map< std::size_t,std::vector<Entity*> > groupedEntities;	// the map which contains the entities object and can be accessed by the hash value of the object as a key
 	FontEntity fontsContainer;
+	ParticleSystem particles;
+	sf::Clock clock;
 
 public:
 
 	int totalLives{3};												//Total number of lives the player has in the game
-	Manager(std::string fontFilePath):fontsContainer(fontFilePath)
+	Manager(std::string fontFilePath):fontsContainer(fontFilePath),particles(2000),clock()
 	{
-
+		particles.setEmitter(sf::Vector2f(WNDHEIGHT/2,WNDWIDTH/2));
 	}
 
 	Manager(const Manager& otherManager) = delete;
@@ -188,6 +191,8 @@ public:
 
 	void update()
 	{
+		sf::Time elapsed = clock.restart();
+		particles.update(elapsed);
 		for(const auto& e: entities)
 		{
 			if(!e->updateRequired)
@@ -203,6 +208,7 @@ public:
 		{
 			e->draw(mTarget);
 		}
+		mTarget.draw(particles);
 	}
 };
 
