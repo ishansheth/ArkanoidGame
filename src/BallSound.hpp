@@ -22,7 +22,8 @@ public:
 		beepSound->setBuffer(*beepSoundBuffer);
 
 	}
-    void playSound() override
+  
+        void playSound() override
 	{
 		beepSound->play();
 	}

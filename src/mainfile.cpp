@@ -4,12 +4,12 @@
 
 int main()
 {
-	XInitThreads();
+  	XInitThreads();
 	LOG()<<DEBUG<<"main game execution started";
 
 	Game game;
 	game.restart();
 	game.run();
-
+	
 	return 0;
 }
