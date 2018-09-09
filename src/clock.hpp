@@ -73,7 +73,7 @@ class Clock
 		{
 			std::cout<<"creating clock object"<<std::endl;
 			killTimerSignal =false;
-			liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH));
+			liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FONTFILEPATH));
 		}
 
 

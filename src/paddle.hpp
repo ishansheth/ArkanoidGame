@@ -46,14 +46,13 @@ public:
 
 	virtual void update() override
 	{
-//		rotatePaddle();
+	  //		rotatePaddle();
 		processPlayerInputs();
 		shape.move(velocity);
 	}
 
 	void movePaddlePosition(float mX,float mY)
 	{
-
 		if(lastPosition.x != mX)
 		{
 			if(lastPosition.x < mX)

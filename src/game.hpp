@@ -81,21 +81,50 @@ class Game
 
 	int gamescore; 																// Game score
 
+  void drawBricksForStage(){
+    if(currentStage == 2){
+      for(int i = 0;i < brickCountX;i++)										// put bricks
+	{
+	  for(int j = 0;j < brickCountY;j++)
+	    {
+	      float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
+	      float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
+	      if(i%2==0)
+		manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);		// create brick entity which requires an update, so last parameter is false
+	      else
+		manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Magenta,3,currentStage,false);	// create brick entity which requires an update, so last parameter is false
+	    }
+	}
+      
+    }else if(currentStage == 1){
+      for(int i = 0;i < brickCountX;i++)										// put bricks
+	{
+	  for(int j = 0;j < brickCountY;j++)
+	    {
+	      float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
+	      float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
+	      manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);		// create brick entity which requires an up	    
+	    }
+	}
+    }else if(currentStage == 3){
+      for(int i = 0;i < brickCountX;i++)										// put bricks
+	{
+	  for(int j = 0;j < brickCountY;j++)
+	    {
+	      float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
+	      float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
+	      manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,3,currentStage,false);		// create brick entity which requires an up	    
+	    }
+	}
+      
+    }
+  }
+
 	void createEntities()
 	{
 		std::cout<<"creating entities"<<std::endl;
-		for(int i = 0;i < brickCountX;i++)										// put bricks
-		{
-			for(int j = 0;j < brickCountY;j++)
-			{
-				float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
-				float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
-				if(i%2==0)
-					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);		// create brick entity which requires an update, so last parameter is false
-				else
-					manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Magenta,3,currentStage,false);	// create brick entity which requires an update, so last parameter is false
-			}
-		}
+		drawBricksForStage();
+
 
 		manager.create<Ball>(WNDWIDTH/2.f,WNDHEIGHT/2.f,false,-2.f,2.f);		// create the ball entity
 		if(gameMode == 0)
@@ -106,11 +135,11 @@ class Game
 		int offset = 0;															// offset between the lives circles
 		for(int i = 0; i < manager.totalLives; i++)
 		{
-			manager.create<lives>(720.f + offset,12.f,false);					// create the lives entity which is circles in the top right corner
+			manager.create<lives>(550.f + offset,12.f,false);					// create the lives entity which is circles in the top right corner
 			offset += 2*lives::defRadius + 2.f;
 		}
 		manager.addFonts(
-				std::make_tuple(FontType::LIVESFONT,650.f,2.f),
+				std::make_tuple(FontType::LIVESFONT,490.f,2.f),
 				std::make_tuple(FontType::SCOREFONT,2.f,2.f),
 				std::make_tuple(FontType::STAGEFONT,WNDWIDTH/2.f +100.f,2.f),
 				std::make_tuple(FontType::CLOCKFONT,WNDWIDTH/2.f - 100.f,2.f),
@@ -119,9 +148,9 @@ class Game
 	}
 
 public:
-	Game():manager(STRINGIZE_VALUE_OF(FILEPATH)),window(sf::VideoMode(WNDWIDTH,WNDHEIGHT),"Arkanoid - 2")
+	Game():manager(STRINGIZE_VALUE_OF(FONTFILEPATH)),window(sf::VideoMode(WNDWIDTH,WNDHEIGHT),"Arkanoid - 2")
 	{
-		liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FILEPATH)); 				// loading the font file from file system in sf::Font
+		liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FONTFILEPATH)); 				// loading the font file from file system in sf::Font
 		gamescore = 0; 															// initial game score
 		currentStage = 1; 														// initial stage number
 		window.setFramerateLimit(60); 											// setting the frame rate for the window
@@ -295,8 +324,11 @@ public:
 			// If game is in progress and space bar is hit, then shoot bullets
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && state == GameState::inprocess)
 			{
-				Paddle* paddleentity = manager.getSingleEntity<Paddle>();
-				manager.create<Bullet>(paddleentity->x(),paddleentity->y(),false);
+			  if(currentStage >= 2){
+			    Paddle* paddleentity = manager.getSingleEntity<Paddle>();
+			    if(manager.getAll<Bullet>().size() <= 3)
+			      manager.create<Bullet>(paddleentity->x(),paddleentity->y(),false);
+			  }
 			}
 
 			if(state == GameState::newlife)
@@ -338,28 +370,28 @@ public:
 		    		updateCV.wait(lk,[this](){return updateDone;});
 		    		updateDone=false;
 		    	}
-				spawedThread = std::thread([this](){changeState(GameState::inprocess);});
+			spawedThread = std::thread([this](){changeState(GameState::inprocess);});
 		    	manager.setFontString<FontType::SCOREFONT>("Score:"+std::to_string(gamescore));
 		    	manager.setFontString<FontType::LIVESFONT>("Balls:");
-				window.draw(manager.getSingleFont<FontType::SCOREFONT>());
-				window.draw(manager.getSingleFont<FontType::LIVESFONT>());
+			window.draw(manager.getSingleFont<FontType::SCOREFONT>());
+			window.draw(manager.getSingleFont<FontType::LIVESFONT>());
 		    	manager.refresh();
 		    	manager.draw(window);
 		    	window.display();
 			}
 
-//			if(manager.getAll<Brick>().empty())
-//			{
-//				manager.setFontString<FontType::GAMEMODEFONT>("You Won!!");
-//				window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
-//				manager.draw(window);
-//		    	window.display();
-//		    	state = GameState::inprocess;
-//		    	currentStage++;
-//		    	manager.clear();
-//		    	clockPtr->killTimer();
-//		    	restart();
-//			}
+			if(manager.getAll<Brick>().empty())
+			{
+			  manager.setFontString<FontType::GAMEMODEFONT>("You Won!!");
+			  window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
+			  manager.draw(window);
+			  window.display();
+			  state = GameState::inprocess;
+			  currentStage++;
+			  manager.clear();
+			  clockPtr->killTimer();
+			  restart();
+			}
 
 			if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P) && !ifGamePaused)
 			{

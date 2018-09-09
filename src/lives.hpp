@@ -17,7 +17,7 @@ public:
 	lives(float mX,float mY,bool updateStatus)
 	{
 		shape.setPosition(mX,mY);
-		shape.setFillColor(sf::Color::White);
+		shape.setFillColor(sf::Color::Red);
 		shape.setRadius(defRadius);
 		shape.setOrigin(defRadius,defRadius);
 		updateRequired = updateStatus;
