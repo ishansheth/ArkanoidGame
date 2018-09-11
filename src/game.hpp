@@ -50,10 +50,10 @@ class Game
 
   int gameMode = -1;
 
-  bool readyForupdate{false};
-  bool updateDone{false};
-  volatile bool startAI{true};
-  bool timeUp{false};
+  bool readyForupdate;
+  bool updateDone;
+  volatile bool startAI;
+  bool timeUp;
 
   int currentStage; /*current stage variable which will be incremented as the stage progresses*/
   
@@ -412,7 +412,11 @@ class Game
 public:
   Game():manager(STRINGIZE_VALUE_OF(FONTFILEPATH)),window(sf::VideoMode(WNDWIDTH,WNDHEIGHT),"Arkanoid - 2"),
 	 state(GameState::inprocess),
-	 ifGamePaused(false)
+	 ifGamePaused(false),
+	 readyForupdate(false),
+	 updateDone(false),
+	 startAI(true),
+	 timeUp(false)
   {
     liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FONTFILEPATH));                 // loading the font file from file system in sf::Font
     gamescore = 0; 								   // initial game score
