@@ -28,7 +28,7 @@ private:
 
 public:
 
-	int totalLives{3};												//Total number of lives the player has in the game
+  int totalLives{3};		     //Total number of lives the player has in the game
 	Manager(std::string fontFilePath):fontsContainer(fontFilePath),clock()
 	{
 	  //		particles.setEmitter(sf::Vector2f(WNDHEIGHT/2,WNDWIDTH/2));
