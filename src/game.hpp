@@ -69,7 +69,14 @@ class Game
   std::thread timerThread;
   std::condition_variable updateCV,AIcv;
   std::mutex mtx,AImtx;
-  
+
+  /**
+     static and constexpr are completely independent of each other. static defines the object'S lifetime during execution. constexpr defines
+     the object should be available during compilation. Compilation and execution are disjoint and discontiguous, both time and space.
+     So once program is compiled, constexpr is no longer relevant
+
+     Every variable declared constexpr is implicitly const but const and static are almost orthogonal
+   **/
   static constexpr int brickCountX{7};  	      // No of bricks in the X direction, no of columns, 11
   static constexpr int brickCountY{5};   	      // No of bricks in the Y direction, no of rows , 4
   static constexpr int brickStartCol{1}; 	      // start column of the bricks, 1

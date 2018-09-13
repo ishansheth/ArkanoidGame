@@ -36,7 +36,9 @@ public:
 		updateRequired = updateStatus;
 		beepSound = std::make_shared<BallSound>(STRINGIZE_VALUE_OF(BEEPSOUNDFILE));
 	}
+  
 	~Ball(){}
+  
 	sf::Vector2f getVelocity(){ return velocity; }
 
 	void setVelocity(float x,float y)
@@ -72,50 +74,50 @@ public:
 	 */
 	void solveBallPaddleRelativeMotion()
 	{
-		if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) && left() > 0)
-		{
-			velocity.x = -8.f;
-			velocity.y = 0;
-		}
-        else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) && right() < WNDWIDTH)
-        {
-		    velocity.x = 8.f;
-        }
-        else
-        {
-		    velocity.x = 0;
-			velocity.y = 0;
-        }
-		shape.move(velocity);
-
+	  if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) && left() > 0)
+	    {
+	      velocity.x = -8.f;
+	      velocity.y = 0;
+	    }
+	  else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) && right() < WNDWIDTH)
+	    {
+	      velocity.x = 8.f;
+	    }
+	  else
+	    {
+	      velocity.x = 0;
+	      velocity.y = 0;
+	    }
+	  shape.move(velocity);
+	  
 	}
 private:
 	// This function keeps the ball inside the window and does not let it go out
 	void solveBoundCollisions() noexcept
 	{
 
-        if(left() < 0)
-        {
-    		beepSound->playSound();
-            velocity.x = -velocity.x;
-        }
-        else if(right() > WNDWIDTH)
-        {
-    		beepSound->playSound();
-            velocity.x = -velocity.x;
-        }
-
-        if(top() < 0)
-        {
-            velocity.y = -velocity.y;
-    		beepSound->playSound();
-        }
-        else if(bottom() > WNDHEIGHT)
-        {
-            velocity.y = -velocity.y;
-    		beepSound->playSound();
-        }
-
+	  if(left() < 0)
+	    {
+	      beepSound->playSound();
+	      velocity.x = -velocity.x;
+	    }
+	  else if(right() > WNDWIDTH)
+	    {
+	      beepSound->playSound();
+	      velocity.x = -velocity.x;
+	    }
+	  
+	  if(top() < 0)
+	    {
+	      velocity.y = -velocity.y;
+	      beepSound->playSound();
+	    }
+	  else if(bottom() > WNDHEIGHT)
+	    {
+	      velocity.y = -velocity.y;
+	      beepSound->playSound();
+	    }
+	
 //		if(isLeftCrossed() || isRightCrossed())
 //		{
 //			velocity.x = -velocity.x;

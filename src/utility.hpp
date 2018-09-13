@@ -1,6 +1,7 @@
 #ifndef SRC_UTILITY_HPP_
 #define SRC_UTILITY_HPP_
 
+#include<algorithm>
 /**
  * Utility functions which are used primarily by the game class to handle the different kinds of collision
  * ball and brick, ball and paddle
@@ -50,19 +51,21 @@ void solveBallBrickCollision(Brick& mbrick, Ball& mball) noexcept
 		float overlapBottom{mbrick.bottom()-mball.top()};
 
 		bool ballFromLeft{std::abs(overlapLeft) < std::abs(overlapRight)};
+		bool ballFromRight{std::abs(overlapLeft) > std::abs(overlapRight)};
+
 		bool ballFromTop{std::abs(overlapTop) < std::abs(overlapBottom)};
+		bool ballFromBottom{std::abs(overlapTop) > std::abs(overlapBottom)};
 
-		float minOverlapX{ballFromLeft ? overlapLeft : overlapRight};
-		float minOverlapY{ballFromTop ? overlapTop : overlapBottom};
-
-		if(std::abs(minOverlapX) < std::abs(minOverlapY))
-		{
-			mball.velocity.x = ballFromLeft ? (mball.velocity.x) : -mball.velocity.x;
+		if((overlapLeft < overlapTop && overlapLeft < overlapBottom) || (overlapRight < overlapTop && overlapRight < overlapBottom)){
+		  mball.velocity.x =  -mball.velocity.x;
+		}
+		else if((overlapTop < overlapLeft && overlapTop < overlapRight) || (overlapBottom < overlapLeft && overlapBottom < overlapRight)){
+		  mball.velocity.y =  -mball.velocity.y;				  
 		}
 		else
-		{
-			mball.velocity.y = ballFromTop ? (mball.velocity.y) : -mball.velocity.y;
-		}
+		  std::cout<<"needs more tests"<<std::endl;
+		  
+
 	}
 }
 #endif /* SRC_UTILITY_HPP_ */
