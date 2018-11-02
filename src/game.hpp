@@ -59,7 +59,7 @@ class Game
   
   sf::Event windowEvent;
   
-  std::unique_ptr<Clock> clockPtr;
+  std::unique_ptr<BoostTimer> clockPtr;
   
   /*threads responsible for several tasks related to entities*/
   std::thread spawedThread;
@@ -202,7 +202,7 @@ class Game
 
   void showTime(std::string timeString)
   {
-    if(timeString == "0:1")
+    if(timeString == "0:0")
       {
 	timeUp = true;
       }
@@ -265,6 +265,7 @@ class Game
 	
 	if(state == GameState::newlife)
 	  {
+	    clockPtr->stopTimer();
 	    {
 	      std::lock_guard<std::mutex> lk(mtx);
 	      Ball* mball = manager.getSingleEntity<Ball>();
@@ -302,6 +303,8 @@ class Game
 	      updateCV.wait(lk,[this](){return updateDone;});
 	      updateDone=false;
 	    }
+	    clockPtr->restartTimer();
+	    // TODO : change this, have a better approach
 	    spawedThread = std::thread([this](){changeState(GameState::inprocess);});
 	    manager.setFontString<FontType::SCOREFONT>("Score:"+std::to_string(gamescore));
 	    manager.setFontString<FontType::LIVESFONT>("Balls:");
@@ -321,7 +324,7 @@ class Game
 	    state = GameState::inprocess;
 	    currentStage++;
 	    manager.clear();
-	    clockPtr->killTimer();
+	    clockPtr->stopTimer();
 	    restart();
 	  }
 	
@@ -472,10 +475,10 @@ public:
     showStageNumberScreen();
     if(gameMode != 0)
       {
-	clockPtr.reset();
-	clockPtr.reset(new Clock());
+	//	clockPtr.reset();
+      	clockPtr.reset(new BoostTimer(0,10));
 	clockPtr->setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
-	clockPtr->start(10,10);
+	clockPtr->startTimer();
       }
     
   }

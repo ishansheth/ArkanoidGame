@@ -6,7 +6,7 @@ include_directories(src)
 
 #link_directories(/usr/local/lib)
 
-set(PROJECT_LINK_LIBS sfml-audio sfml-window sfml-graphics sfml-system pthread X11)
+set(PROJECT_LINK_LIBS sfml-audio sfml-window sfml-graphics sfml-system pthread boost_system X11)
 
 file(GLOB SOURCES "src/mainfile.cpp")
 

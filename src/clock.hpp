@@ -16,6 +16,10 @@
 #include <mutex>
 #include <future>
 
+#include<boost/asio.hpp>
+#include<boost/bind.hpp>
+#include<boost/date_time/posix_time/posix_time.hpp>
+
 class Stoppable
 {
 	std::promise<void> exitSignal;
@@ -58,78 +62,88 @@ public:
 	}
 };
 
-class Clock
-{
-	int min;
-	int sec;
-	sf::Font liberationSans;
-	bool killTimerSignal;
-//	std::mutex clockMutex;
-	std::function<void(std::string)> callbackFunc;
-	std::thread timerThread;
+class BoostTimer{
 
-	public:
-		Clock()
-		{
-			std::cout<<"creating clock object"<<std::endl;
-			killTimerSignal =false;
-			liberationSans.loadFromFile(STRINGIZE_VALUE_OF(FONTFILEPATH));
-		}
+  boost::asio::io_service io;
+  boost::asio::io_service::work work;
+  boost::asio::deadline_timer m_timer;
 
+  int m_secCount;
+  int m_minCount;
+  int m_startCount;
+  std::function<void(std::string)> m_callbackFunc;
 
-		~Clock()
-		{
-			if(timerThread.joinable())
-			{
-				std::cout<<"joining timer thread"<<std::endl;
-				timerThread.join();
-			}
-		}
+  std::thread timerThread;
+  void launchTimer(){
+    std::cout<<"Timerlauched\n";
+    timerThread =  std::thread([this](){io.run();});
+  }
 
-		void setCallback(std::function<void(std::string)> bindingFunc)
-		{
-			callbackFunc = bindingFunc;
-		}
+public:
+  BoostTimer(int min, int sec):m_secCount(sec),
+		      m_minCount(min),
+		      m_startCount(0),
+		      m_timer(io,boost::posix_time::seconds(1)),
+		      work(io)
+  {
+    launchTimer();
+  }
 
-		void resetClock(int min,int sec)
-		{
-			this->min = min;
-			this->sec = sec;
-		}
+  void repeat(){
+    if(m_startCount>0){
+      m_startCount--;
+      m_secCount--;
+      if(m_secCount < 0){
+	m_minCount--;
+	m_secCount = 59;
+      }
+      
+      if(m_minCount>=0){
+	std::string timetext = std::to_string(m_minCount) + ":" + std::to_string(m_secCount);
+	m_callbackFunc(timetext);
+      }
 
-		void start(int a, int b)
-		{
-			std::cout<<"starting new clock"<<std::endl;
-			min = a;sec = b;
-			timerThread =  std::thread(&Clock::runClock,this);
-		}
+      m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(1));
+      m_timer.async_wait([this](const boost::system::error_code& ec){
+	  if(!ec){
+	    repeat();
+	  }
+	});
+    }
+    else{
+      std::cout<<"Timerover\n";
+    }
+  }
 
-		void killTimer()
-		{
-			std::cout<<"killing timer"<<std::endl;
-			killTimerSignal = true;
-		}
-
-		void runClock()
-		{
-			while(!killTimerSignal)
-			{
-				std::this_thread::sleep_for (std::chrono::seconds(1));
-				sec--;
-				if(sec < 0)
-				{
-					min--;
-					sec = 59;
-					if(min < 0)
-					{
-						std::cout<<"time over"<<std::endl;
-						break;
-					}
-				}
-				std::string timetext = std::to_string(min) + ":" + std::to_string(sec);
-				if(callbackFunc)
-					callbackFunc(timetext);
-			}
-		}
+  void setCallback(std::function<void(std::string)> bindingFunc){
+    m_callbackFunc = bindingFunc;
+  }
+  
+  void startTimer(){
+    m_startCount = (m_minCount*60)+m_secCount;
+    repeat();
+  }
+  
+  void restartTimer(){
+    m_startCount = (m_minCount*60)+m_secCount;
+    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(1));
+    m_timer.async_wait([this](const boost::system::error_code& ec){
+	if(!ec)
+	  repeat();
+	else
+	  std::cout<<"timer handler error\n";
+      });
+  }
+  
+  void stopTimer(){
+    m_timer.cancel();
+  }
+  
+  ~BoostTimer(){
+    if(timerThread.joinable())
+      timerThread.join();
+    io.stop();
+  }
+  
 };
 #endif /* SRC_CLOCK_HPP_ */
