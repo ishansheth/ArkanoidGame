@@ -132,7 +132,6 @@ class Game
     std::cout<<"creating entities"<<std::endl;
     drawBricksForStage();
     
-
     manager.create<Ball>(WNDWIDTH/2.f,WNDHEIGHT/2.f,false,-2.f,2.f);		// create the ball entity
     if(gameMode == 0)
       manager.create<Paddle>(WNDWIDTH/2.f,550,true);				// create the paddle entity
@@ -245,7 +244,7 @@ class Game
 	// When time is up, you lost the game
 	if(timeUp)
 	  {
-	    
+	    clockPtr->stopTimer();	    
 	    window.clear(sf::Color::Black);
 	    state = GameState::lost;
 	    manager.setFontString<FontType::GAMEMODEFONT>("You Lost!!");
@@ -331,6 +330,7 @@ class Game
 	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P) && !ifGamePaused)
 	  {
 	    state = GameState::paused;
+	    clockPtr->pauseTimer();
 	    manager.setFontString<FontType::GAMEMODEFONT>("Paused");
 	    window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
 	    ifGamePaused = true;
@@ -340,6 +340,7 @@ class Game
 	
 	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R) && ifGamePaused)
 	  {
+	    clockPtr->restartTimer();	    
 	    state = GameState::inprocess;
 	    ifGamePaused = false;
 	  }
@@ -349,7 +350,7 @@ class Game
 	    {
 	      std::lock_guard<std::mutex> lk(mtx);
 	      readyForupdate = true;
-		    	}
+	    }
 	    updateCV.notify_one();
 	    {
 	      std::unique_lock<std::mutex> lk(mtx);
@@ -476,7 +477,7 @@ public:
     if(gameMode != 0)
       {
 	//	clockPtr.reset();
-      	clockPtr.reset(new BoostTimer(0,10));
+      	clockPtr.reset(new BoostTimer(0,50));
 	clockPtr->setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
 	clockPtr->startTimer();
       }

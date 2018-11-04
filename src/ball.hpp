@@ -20,12 +20,7 @@ public:
 	sf::Vector2f velocity;
 	std::shared_ptr<SoundEntity> beepSound;
 
-//	bool isLeftCrossed(){ return((x() - shape.getRadius()) < 0);}
-//	bool isRightCrossed(){return((x() + shape.getRadius()) > wndWidth);}
-//	bool isTopCrossed(){return((y() - shape.getRadius()) < 0);}
-//	bool isBottomCrossed(){return((y() + shape.getRadius()) > wndHeight);}
-
-	Ball(float mX,float mY,bool updateStatus,float xvector,float yvector)
+        Ball(float mX,float mY,bool updateStatus,float xvector,float yvector)
 	{
 		velocity.x = xvector;
 		velocity.y = yvector;
