@@ -150,7 +150,7 @@ class Game
 		     std::make_tuple(FontType::STAGEFONT,WNDWIDTH/2.f +100.f,2.f),
 		     std::make_tuple(FontType::CLOCKFONT,WNDWIDTH/2.f - 100.f,2.f),
 		     std::make_tuple(FontType::GAMEMODEFONT,WNDWIDTH/2.f - 100.f,WNDHEIGHT/2.f)
-		     );
+		     );    
   }
 
 
@@ -162,7 +162,6 @@ class Game
 
   void showStageNumberScreen()
   {
-    std::cout<<"showing stage number screen"<<std::endl;
     window.clear(sf::Color::Black);
     manager.addFonts(std::make_tuple(FontType::STAGEFONT,WNDWIDTH/2.f - 70.f,WNDHEIGHT/2.f));
     manager.setFontString<FontType::STAGEFONT>("Stage: " + std::to_string(currentStage));
@@ -236,6 +235,7 @@ class Game
 		window.display();
 	      }else{
 	      state = GameState::newlife;
+	     
 	      Paddle* paddleentity = manager.getSingleEntity<Paddle>();
 	      manager.create<Ball>(paddleentity->x(),paddleentity->y()-2*Ball::defRadius,true,2.f,-2.f);
 	    }
@@ -255,16 +255,15 @@ class Game
 	// If game is in progress and space bar is hit, then shoot bullets
 	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && state == GameState::inprocess)
 	  {
-	    if(currentStage >= 2){
-	      Paddle* paddleentity = manager.getSingleEntity<Paddle>();
-	      if(manager.getAll<Bullet>().size() <= 3)
+	    if(currentStage >= 1){
+	      	      Paddle* paddleentity = manager.getSingleEntity<Paddle>();
+	      //	      if(manager.getAll<Bullet>().size() <= 3)
 		manager.create<Bullet>(paddleentity->x(),paddleentity->y(),false);
 	    }
 	  }
 	
 	if(state == GameState::newlife)
 	  {
-	    clockPtr->stopTimer();
 	    {
 	      std::lock_guard<std::mutex> lk(mtx);
 	      Ball* mball = manager.getSingleEntity<Ball>();
@@ -302,7 +301,6 @@ class Game
 	      updateCV.wait(lk,[this](){return updateDone;});
 	      updateDone=false;
 	    }
-	    clockPtr->restartTimer();
 	    // TODO : change this, have a better approach
 	    spawedThread = std::thread([this](){changeState(GameState::inprocess);});
 	    manager.setFontString<FontType::SCOREFONT>("Score:"+std::to_string(gamescore));
@@ -323,7 +321,8 @@ class Game
 	    state = GameState::inprocess;
 	    currentStage++;
 	    manager.clear();
-	    clockPtr->stopTimer();
+	    //	    clockPtr->stopTimer();
+	    //clockPtr.reset();
 	    restart();
 	  }
 	
@@ -476,12 +475,10 @@ public:
     showStageNumberScreen();
     if(gameMode != 0)
       {
-	//	clockPtr.reset();
       	clockPtr.reset(new BoostTimer(0,50));
 	clockPtr->setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
 	clockPtr->startTimer();
       }
-    
   }
   
   

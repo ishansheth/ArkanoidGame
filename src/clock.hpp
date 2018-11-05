@@ -65,7 +65,7 @@ public:
 
 class BoostTimer{
   boost::asio::io_service io;
-  boost::asio::io_service::work work;
+  std::shared_ptr<boost::asio::io_service::work> work;
   boost::asio::deadline_timer m_timer;
   int m_secCount;
   int m_minCount;
@@ -80,11 +80,12 @@ class BoostTimer{
   }
   
 public:
+
   BoostTimer(int min, int sec):m_secCount(sec),
 		      m_minCount(min),
 		      m_startCount(0),
 		      m_timer(io,boost::posix_time::seconds(1)),
-			       work(io),timerRunning(false)
+			       work(std::make_shared<boost::asio::io_service::work>(io)),timerRunning(false)
   {
     launchTimer();
   }
@@ -117,20 +118,21 @@ public:
   void setCallback(std::function<void(std::string)> bindingFunc){
     m_callbackFunc = bindingFunc;
   }
+
   
   void startTimer(){
+    
     m_startCount = (m_minCount*60)+m_secCount;
     repeat();
     timerRunning = true;
   }
 
   void resetTimer(int min, int sec){
-    stopTimer();
+    m_timer.cancel();
     m_minCount = min;
     m_secCount = sec;
     m_startCount = (m_minCount*60)+m_secCount;
-    repeat();
-    timerRunning = true;    
+    startTimer();
   }
   
   void restartTimer(){
@@ -139,10 +141,10 @@ public:
   }
   
   void stopTimer(){
+    m_timer.cancel();
     m_startCount = 0;
     m_minCount = 0;
     m_secCount = 0;
-    m_timer.cancel();
     timerRunning = false;
   }
 
@@ -152,6 +154,8 @@ public:
   }
   
   ~BoostTimer(){
+    m_timer.cancel();
+    work.reset();
     if(timerThread.joinable())
       timerThread.join();
     io.stop();
