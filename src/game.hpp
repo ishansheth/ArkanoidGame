@@ -84,44 +84,22 @@ class Game
   int gamescore; 				      // Game score
 
   void drawBricksForStage(){
-    if(currentStage == 2){
-      for(int i = 0;i < brickCountX;i++)	      // put bricks
-	{
-	  for(int j = 0;j < brickCountY;j++)
-	    {
-	      float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
-	      float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
-	      if(i%2==0)
-		manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);		// create brick entity which requires an update, so last parameter is false
-	      else
-		manager.create<Brick>(brickOffsetX +x ,y,sf::Color::Magenta,3,currentStage,false);	// create brick entity which requires an update, so last parameter is false
-	    }
-	}
-      
-    }else if(currentStage == 1){
-      for(int i = 0;i < brickCountX;i++)										// put bricks
-	{
-	  for(int j = 0;j < brickCountY;j++)
-	    {
-	      float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
-	      float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
-	      manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);		// create brick entity which requires an up	    
-	    }
-	}
-    }else if(currentStage == 3){
-      for(int i = 0;i < brickCountX;i++)										// put bricks
-	{
-	  for(int j = 0;j < brickCountY;j++)
-	    {
-	      float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
-	      float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
-	      manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,3,currentStage,false);		// create brick entity which requires an up	    
-	    }
-	}
-      
-    }
+    for(int i = 0;i < brickCountX;i++)	      // put bricks
+      {
+	for(int j = 0;j < brickCountY;j++)
+	  {
+	    
+	    float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
+	    float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
+	    auto conf = BrickConfig::m_brickConf[currentStage]; 
+	    if(  *(conf+j*brickCountY + i)   )
+	      {
+		manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);
+		}
+	  }
+      }       
   }
-
+  
   void createEntities()
   {
     std::cout<<"creating entities"<<std::endl;
