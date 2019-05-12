@@ -26,6 +26,7 @@ public:
 
 	void update(sf::Time elapsed)
 	{
+	  
 		for(std::size_t i = 0; i < m_particles.size();i++)
 		{
 			Particle& p = m_particles[i];
@@ -37,7 +38,7 @@ public:
 			m_vertices[i].position += p.velocity * elapsed.asSeconds();
 
 			float ratio = p.lifetime.asSeconds() / m_lifetime.asSeconds();
-			m_vertices[i].color = sf::Color::Green;
+			m_vertices[i].color = sf::Color::Red;
 			m_vertices[i].color.a = static_cast<sf::Uint8>(ratio*255);
 		}
 	}
@@ -71,6 +72,7 @@ private:
 	sf::VertexArray m_vertices;
 	sf::Time m_lifetime;
 	sf::Vector2f m_emitter;
+
 };
 
 

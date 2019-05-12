@@ -20,49 +20,46 @@
 #include<boost/bind.hpp>
 #include<boost/date_time/posix_time/posix_time.hpp>
 
-class Stoppable
-{
-	std::promise<void> exitSignal;
-	std::future<void> futureObj;
+/**
+   Timer with sime timer thread;
+ **/
+class MyTimer{
+  std::thread m_timerThread;
+  int m_secCount;
+  int m_minCount;
+  int m_startCount;
+  std::function<void(std::string)> m_callbackFunc;
 
+  void launchTimer(){
+    std::cout<<"Timer launched \n";
+    m_timerThread = std::thread(&MyTimer::timerFunction,this);
+  }
+  
 public:
-	Stoppable():futureObj(exitSignal.get_future())
-	{}
+  MyTimer(int min,int sec):m_secCount(sec),m_minCount(min)
+  {
+    launchTimer();
+  }
 
-	Stoppable(Stoppable&& obj):exitSignal(std::move(obj.exitSignal)),futureObj(std::move(obj.futureObj))
-	{
-		std::cout<<"Move constructor is called"<<std::endl;
-	}
+  void setCallback(std::function<void(std::string)> bindingFunc){
+    m_callbackFunc = bindingFunc;
+  }
 
-	Stoppable& operator=(Stoppable&& obj)
-	{
-		std::cout<<"move assignment"<<std::endl;
-		exitSignal = std::move(obj.exitSignal);
-		futureObj = std::move(obj.futureObj);
-		return *this;
-	}
-
-	virtual void run() = 0;
-
-	void operator()()
-	{
-		run();
-	}
-
-	bool stopRequested()
-	{
-		if(futureObj.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout)
-			return false;
-		return true;
-	}
-
-	void stop()
-	{
-		exitSignal.set_value();
-	}
+  void timerFunction(){
+    std::cout<<"timer"<<std::endl;
+  }
+  
+  ~MyTimer(){
+    if(m_timerThread.joinable())
+      m_timerThread.join();
+  }
 };
 
 
+
+/**
+   Timer with the help of boost timer library
+ **/
 class BoostTimer{
   boost::asio::io_service io;
   std::shared_ptr<boost::asio::io_service::work> work;

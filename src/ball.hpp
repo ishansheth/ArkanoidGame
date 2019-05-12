@@ -36,93 +36,96 @@ public:
   
 	sf::Vector2f getVelocity(){ return velocity; }
 
-	void setVelocity(float x,float y)
+	void increaseVelocity(int quotient)
 	{
-		velocity.x = x;
-		velocity.y = y;
+		velocity.x *= quotient;
+		velocity.y *= quotient;
 	}
 
-	void setPosition(float mX,float mY)
-	{
-		shape.setPosition(mX,mY);
-	}
+  void resetVelocity(int quotient){
+    velocity.x /= quotient;
+    velocity.y /= quotient;
+    
+  }
+  
 
-	virtual void update() override
-	{
-		solveBoundCollisions();
-		shape.move(velocity);
-	}
-
-	virtual void draw(sf::RenderWindow& mTarget) override
-	{
-		mTarget.draw(shape);
-	}
-
-	virtual bool checkEntityDied() override
-	{
-		return(bottom() > WNDHEIGHT);
-	}
-
-	/**
-	 * This function takes care of moving the ball along with paddle when its sitting on the paddle.
-	 * So it creates the relative motion between ball and paddle
-	 */
-	void solveBallPaddleRelativeMotion()
-	{
-	  if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) && left() > 0)
-	    {
-	      velocity.x = -8.f;
-	      velocity.y = 0;
-	    }
-	  else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) && right() < WNDWIDTH)
-	    {
-	      velocity.x = 8.f;
-	    }
-	  else
-	    {
-	      velocity.x = 0;
-	      velocity.y = 0;
-	    }
-	  shape.move(velocity);
-	  
-	}
+  void setPosition(float mX,float mY)
+  {
+    shape.setPosition(mX,mY);
+  }
+  
+  sf::Vector2f getPosition()
+  {
+    return shape.getPosition();
+  }
+  
+  virtual void update() override
+  {
+    solveBoundCollisions();
+    shape.move(velocity);
+  }
+  
+  virtual void draw(sf::RenderWindow& mTarget) override
+  {
+    mTarget.draw(shape);
+  }
+  
+  virtual bool checkEntityDied() override
+  {
+    return(bottom() > WNDHEIGHT);
+  }
+  
+  /**
+   * This function takes care of moving the ball along with paddle when its sitting on the paddle.
+   * So it creates the relative motion between ball and paddle
+   */
+  void solveBallPaddleRelativeMotion()
+  {
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) && left() > 0)
+      {
+	velocity.x = -8.f;
+	velocity.y = 0;
+      }
+    else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) && right() < WNDWIDTH)
+      {
+	velocity.x = 8.f;
+      }
+    else
+      {
+	velocity.x = 0;
+	velocity.y = 0;
+      }
+    shape.move(velocity);
+    
+  }
 private:
-	// This function keeps the ball inside the window and does not let it go out
-	void solveBoundCollisions() noexcept
-	{
-
-	  if(left() < 0)
-	    {
-	      beepSound->playSound();
-	      velocity.x = -velocity.x;
-	    }
-	  else if(right() > WNDWIDTH)
-	    {
-	      beepSound->playSound();
-	      velocity.x = -velocity.x;
-	    }
-	  
-	  if(top() < 0)
-	    {
-	      velocity.y = -velocity.y;
-	      beepSound->playSound();
-	    }
-	  else if(bottom() > WNDHEIGHT)
-	    {
-	      velocity.y = -velocity.y;
-	      beepSound->playSound();
-	    }
-	
-//		if(isLeftCrossed() || isRightCrossed())
-//		{
-//			velocity.x = -velocity.x;
-//		}
-//		else if(isTopCrossed() || isBottomCrossed())
-//		{
-//			velocity.y = -velocity.y;
-//		}
-
-	}
+  // This function keeps the ball inside the window and does not let it go out
+  void solveBoundCollisions() noexcept
+  {
+    
+    if(left() < 0)
+      {
+	beepSound->playSound();
+	velocity.x = -velocity.x;
+      }
+    else if(right() > WNDWIDTH)
+      {
+	beepSound->playSound();
+	velocity.x = -velocity.x;
+      }
+    
+    if(top() < 0)
+      {
+	velocity.y = -velocity.y;
+	beepSound->playSound();
+      }
+    else if(bottom() > WNDHEIGHT)
+      {
+	velocity.y = -velocity.y;
+	beepSound->playSound();
+      }
+    
+  }
 };
 // Green color of the ball is set fixed as a static variable
 const sf::Color Ball::defColor{sf::Color::Green};

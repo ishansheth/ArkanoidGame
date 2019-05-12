@@ -23,6 +23,7 @@
 #include "MenuClass.hpp"
 #include "macros.hpp"
 #include "brickConfig.hxx"
+#include "Logging.hpp"
 #include <thread>
 #include <mutex>
 #include <functional>
@@ -91,18 +92,19 @@ class Game
 	    
 	    float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
 	    float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
-	    auto conf = BrickConfig::m_brickConf[currentStage]; 
+	    auto conf = BrickConfig::m_brickConf[currentStage];
 	    if(  *(conf+j*brickCountY + i)   )
 	      {
 		manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);
-		}
+	      }
 	  }
       }       
   }
   
   void createEntities()
   {
-    std::cout<<"creating entities"<<std::endl;
+    LOG()<<DEBUG<<"creating entities";
+
     drawBricksForStage();
     
     manager.create<Ball>(WNDWIDTH/2.f,WNDHEIGHT/2.f,false,-2.f,2.f);		// create the ball entity
@@ -146,7 +148,8 @@ class Game
 
   void updateEntities()
   {
-    std::cout<<"update entities thread started"<<std::endl;
+    LOG()<<DEBUG<<"update entities thread started";
+    
     while(1)
       {
 	std::unique_lock<std::mutex> lck(mtx);
@@ -161,7 +164,8 @@ class Game
 
   void automateGame()
   {
-    std::cout<<"AI thread started"<<std::endl;
+    LOG()<<DEBUG<<"AI thread started";
+    
     while(1)
       {
 	std::unique_lock<std::mutex> lck(AImtx);
@@ -185,7 +189,8 @@ class Game
   
   void startEngineLoop()
   {
-    std::cout<<"main engine thread started"<<std::endl;
+    LOG()<<DEBUG<<"main engine thread started";
+
     while(true)
       {
 	window.clear(sf::Color::Black);
@@ -194,6 +199,19 @@ class Game
 	window.draw(manager.getSingleFont<FontType::CLOCKFONT>());
 	window.draw(manager.getSingleFont<FontType::STAGEFONT>());
 	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) exit(0);
+	/**
+	// check the status of the ball
+	manageEntity<Ball>();
+
+	// check the status of paddle
+	mamageEntity<Paddle>();
+
+	manageKeyBoardinputs();
+
+	manageStatesofGame();
+	**/
+
+	manager.disableBooster(5);
 	if(manager.checkBallDropped())
 	  {
 	    manager.handleBallDrop();
@@ -228,11 +246,7 @@ class Game
 	// If game is in progress and space bar is hit, then shoot bullets
 	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && state == GameState::inprocess)
 	  {
-	    if(currentStage >= 1){
-	      	      Paddle* paddleentity = manager.getSingleEntity<Paddle>();
-	      //	      if(manager.getAll<Bullet>().size() <= 3)
-		manager.create<Bullet>(paddleentity->x(),paddleentity->y(),false);
-	    }
+	    	      manager.enableBooster(5);
 	  }
 	
 	if(state == GameState::newlife)
@@ -275,7 +289,8 @@ class Game
 	      updateDone=false;
 	    }
 	    // TODO : change this, have a better approach
-	    spawedThread = std::thread([this](){changeState(GameState::inprocess);});
+	    //	    spawedThread = std::thread([this](){changeState(GameState::inprocess);});
+	    state = GameState::inprocess;
 	    manager.setFontString<FontType::SCOREFONT>("Score:"+std::to_string(gamescore));
 	    manager.setFontString<FontType::LIVESFONT>("Balls:");
 	    window.draw(manager.getSingleFont<FontType::SCOREFONT>());
@@ -367,14 +382,6 @@ class Game
 				       }
 				   });
 	    
-	    manager.forEach<Brick>([this](Brick& mbrick)
-				   {
-				     if(mbrick.destroyed)
-				       {
-					 
-				       }
-				   }
-				   );
 	    manager.setFontString<FontType::SCOREFONT>("Score:"+std::to_string(gamescore));
 	    manager.setFontString<FontType::LIVESFONT>("Balls:");
 	    window.draw(manager.getSingleFont<FontType::SCOREFONT>());
@@ -384,10 +391,11 @@ class Game
 	    window.display();
 	    
 	  }
+	/**
 	if(spawedThread.joinable())
 	  {
 	    spawedThread.join();
-	  }
+	    }**/
       }
   }
   
@@ -444,6 +452,7 @@ public:
 	    }
 	}
       }
+    manager.clear();
     createEntities();
     showStageNumberScreen();
     if(gameMode != 0)

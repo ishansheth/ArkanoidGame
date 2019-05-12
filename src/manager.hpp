@@ -23,15 +23,16 @@ private:
 	std::vector<std::shared_ptr<Entity>> entities; 					// the vector which contains the entities object
 	std::map< std::size_t,std::vector<Entity*> > groupedEntities;	// the map which contains the entities object and can be accessed by the hash value of the object as a key
 	FontEntity fontsContainer;
-  //	ParticleSystem particles;
+	ParticleSystem particles;
 	sf::Clock clock;
-
+  bool isBooster;
+  
 public:
 
   int totalLives{3};		     //Total number of lives the player has in the game
-  Manager(std::string fontFilePath):fontsContainer(fontFilePath),clock()
+  Manager(std::string fontFilePath):fontsContainer(fontFilePath),clock(),particles(2000),isBooster(false)
   {
-    //		particles.setEmitter(sf::Vector2f(WNDHEIGHT/2,WNDWIDTH/2));
+		particles.setEmitter(sf::Vector2f(WNDHEIGHT/2,WNDWIDTH/2));
   }
   
   Manager(const Manager& otherManager) = delete;
@@ -188,11 +189,28 @@ public:
     auto vector(getAll<lives>());
     vector.back()->destroyed = true;
   }
+
+  void enableBooster(int quotient){
+    Ball* ballentity = getSingleEntity<Ball>();
+    sf::Time elapsed = clock.restart();
+    ballentity->increaseVelocity(quotient);
+    particles.setEmitter(ballentity->getPosition());
+
+    particles.update(elapsed);
+    isBooster = true;
+  }
+
+  void disableBooster(int quotient){
+    if(isBooster){
+      Ball* ballentity = getSingleEntity<Ball>();
+      ballentity->resetVelocity(quotient);
+      isBooster = false;
+    }
+  }
   
   void update()
   {
-    sf::Time elapsed = clock.restart();
-    //		particles.update(elapsed);
+    
     for(const auto& e: entities)
       {
 	if(!e->updateRequired)
@@ -208,7 +226,8 @@ public:
       {
 	e->draw(mTarget);
       }
-    //		mTarget.draw(particles);
+    if(isBooster)
+      mTarget.draw(particles);
   }
 };
 
