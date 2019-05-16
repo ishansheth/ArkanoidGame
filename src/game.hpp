@@ -56,8 +56,6 @@ class Game
   bool updateDone;
   volatile bool startAI;
   bool timeUp;
-
-  int currentStage; /*current stage variable which will be incremented as the stage progresses*/
   
   sf::Event windowEvent;
   
@@ -71,7 +69,7 @@ class Game
   std::thread timerThread;
   std::condition_variable updateCV,AIcv;
   std::mutex mtx,AImtx;
-
+  int currentStage;
   /**
      static and constexpr are completely independent of each other. static defines the object'S lifetime during execution. constexpr defines
      the object should be available during compilation. Compilation and execution are disjoint and discontiguous, both time and space.
@@ -84,55 +82,51 @@ class Game
 
   int gamescore; 				      // Game score
 
-  void drawBricksForStage(){
-    for(int i = 0;i < brickCountX;i++)	      // put bricks
-      {
-	for(int j = 0;j < brickCountY;j++)
-	  {
-	    
-	    float x{(i + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
-	    float y{(j + brickStartRow)*(Brick::defHeight + brickSpacing)};
-	    auto conf = BrickConfig::m_brickConf[currentStage];
-	    if(  *(conf+j*brickCountY + i)   )
-	      {
-		manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);
-	      }
-	  }
-      }       
-  }
-  
   void createEntities()
   {
     LOG()<<DEBUG<<"creating entities";
-
+    
+    
     drawBricksForStage();
     
-    manager.create<Ball>(WNDWIDTH/2.f,WNDHEIGHT/2.f,false,-2.f,2.f);		// create the ball entity
+    manager.create<Ball>(WNDWIDTH/2.f,WNDHEIGHT/2.f,false,-2.f,2.f);	    // create the ball entity
     if(gameMode == 0)
-      manager.create<Paddle>(WNDWIDTH/2.f,550,true);				// create the paddle entity
+      manager.create<Paddle>(WNDWIDTH/2.f,550,true);			    // create the paddle entity
     else
-      manager.create<Paddle>(WNDWIDTH/2.f,550,false);				// create the paddle entity
-
-    int offset = 0;							        // offset between the lives circles
+      manager.create<Paddle>(WNDWIDTH/2.f,550,false);			    // create the paddle entity
+    
+    int offset = 0;							    // offset between the lives circles
     for(int i = 0; i < manager.totalLives; i++)
       {
-	manager.create<lives>(550.f + offset,12.f,false);			// create the lives entity which is circles in the top right corner
+	manager.create<lives>(WNDWIDTH - 50.f + offset,12.f,false);         // create the lives entity which is circles in the top right corner
 	offset += 2*lives::defRadius + 2.f;
       }
     manager.addFonts(
-		     std::make_tuple(FontType::LIVESFONT,490.f,2.f),
+		     std::make_tuple(FontType::LIVESFONT,WNDWIDTH-110.f,2.f),
 		     std::make_tuple(FontType::SCOREFONT,2.f,2.f),
-		     std::make_tuple(FontType::STAGEFONT,WNDWIDTH/2.f +100.f,2.f),
+		     std::make_tuple(FontType::STAGEFONT,WNDWIDTH/2.f +200.f,2.f),
 		     std::make_tuple(FontType::CLOCKFONT,WNDWIDTH/2.f - 100.f,2.f),
 		     std::make_tuple(FontType::GAMEMODEFONT,WNDWIDTH/2.f - 100.f,WNDHEIGHT/2.f)
 		     );    
   }
-
-
-  void changeState(const GameState& s)
-  {
-    std::this_thread::sleep_for (std::chrono::milliseconds(100));         // This Delay is required because when spacebar is pressed, the bullet can not be shot immediately
-    state = s;
+  
+  void drawBricksForStage(){
+    for(int i = 0;i < brickCountX;i++)	      // put bricks
+      {
+	int yThreshold = 0,k = 0;
+	yThreshold = (k + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing);
+	while((yThreshold + Brick::defWidth + brickSpacing) < WNDWIDTH){
+	    float x{(k + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing)};
+	    float y{(i + brickStartRow)*(Brick::defHeight + brickSpacing)};
+	    auto conf = BrickConfig::m_brickConf[currentStage];
+	    if(  *(conf+k*brickCountY + i)   )
+	      {
+		manager.create<Brick>(brickOffsetX +x ,y,sf::Color::White,1,currentStage,false);
+	      }
+	    k++;
+	    yThreshold = (k + brickStartCol*(0.7f))*(Brick::defWidth + brickSpacing);	  
+	}
+      }       
   }
 
   void showStageNumberScreen()
@@ -193,25 +187,15 @@ class Game
 
     while(true)
       {
-	window.clear(sf::Color::Black);
+	window.clear(sf::Color::Blue);
 	manager.setFontString<FontType::STAGEFONT>("Stage:"+std::to_string(static_cast<int>(currentStage)));
 	
 	window.draw(manager.getSingleFont<FontType::CLOCKFONT>());
 	window.draw(manager.getSingleFont<FontType::STAGEFONT>());
-	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) exit(0);
-	/**
-	// check the status of the ball
-	manageEntity<Ball>();
+	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
+	  exit(0);
 
-	// check the status of paddle
-	mamageEntity<Paddle>();
-
-	manageKeyBoardinputs();
-
-	manageStatesofGame();
-	**/
-
-	manager.disableBooster(5);
+	manager.disableBooster();
 	if(manager.checkBallDropped())
 	  {
 	    manager.handleBallDrop();
@@ -246,7 +230,7 @@ class Game
 	// If game is in progress and space bar is hit, then shoot bullets
 	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && state == GameState::inprocess)
 	  {
-	    	      manager.enableBooster(5);
+	    manager.enableBooster();
 	  }
 	
 	if(state == GameState::newlife)
@@ -457,7 +441,7 @@ public:
     showStageNumberScreen();
     if(gameMode != 0)
       {
-      	clockPtr.reset(new BoostTimer(0,50));
+      	clockPtr.reset(new BoostTimer(1,50));
 	clockPtr->setCallback(std::bind(&Game::showTime,this,std::placeholders::_1));
 	clockPtr->startTimer();
       }

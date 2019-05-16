@@ -18,24 +18,23 @@ public:
 	BallSound(const std::string& fpath):SoundEntity()
 	{
 		filepath = fpath;
-		beepSoundBuffer->loadFromFile(filepath);
-		beepSound->setBuffer(*beepSoundBuffer);
-
+		soundBuffer->loadFromFile(filepath);
+		sound->setBuffer(*soundBuffer);
 	}
   
         void playSound() override
 	{
-		beepSound->play();
+		sound->play();
 	}
 
 	void pauseSound() override
 	{
-		beepSound->pause();
+		sound->pause();
 	}
 
 	void setPlaybackLoop(bool flag) override
 	{
-		beepSound->setLoop(flag);
+		sound->setLoop(flag);
 	}
 };
 #endif /* SRC_BALLSOUND_HPP_ */

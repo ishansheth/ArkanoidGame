@@ -34,7 +34,7 @@ class FontEntity
 {
 	sf::Font libersans;
 	std::mutex textContainerMutex;
-	std::unordered_map<FontType,sf::Text,FontsMapHash> textMap;
+	std::unordered_map<FontType,sf::Text> textMap;
 
 public:
 	explicit FontEntity(std::string fontFilePath)

@@ -14,6 +14,6 @@
 #define BRICKHEIGHT 20.f
 #define BRICKWIDTH 70.f
 #define WNDHEIGHT 600
-#define WNDWIDTH 600
+#define WNDWIDTH 900
 
 #endif /* SRC_MACROS_HPP_ */

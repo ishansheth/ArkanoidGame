@@ -13,11 +13,11 @@
 class SoundEntity
 {
 protected:
-	std::shared_ptr<sf::SoundBuffer> beepSoundBuffer;
-	std::shared_ptr<sf::Sound> beepSound;
+	std::shared_ptr<sf::SoundBuffer> soundBuffer;
+	std::shared_ptr<sf::Sound> sound;
 public:
 	SoundEntity():
-		beepSoundBuffer(std::make_shared<sf::SoundBuffer>()),beepSound(std::make_shared<sf::Sound>()){}
+		soundBuffer(std::make_shared<sf::SoundBuffer>()),sound(std::make_shared<sf::Sound>()){}
 	virtual void playSound()=0;
 	virtual void pauseSound()=0;
 	virtual void setPlaybackLoop(bool flag)=0;
