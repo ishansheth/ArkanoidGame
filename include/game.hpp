@@ -21,6 +21,7 @@
 #include "clock.hpp"
 #include "utility.hpp"
 #include "MenuClass.hpp"
+#include "MenuClass.cpp"
 #include "macros.hpp"
 #include "Logging.hpp"
 #include <thread>

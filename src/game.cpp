@@ -186,6 +186,7 @@ Game::startEngineLoop(){
 	manager.draw(window);
 	window.draw(manager.getSingleFont<FontType::GAMEMODEFONT>());
 	window.display();
+
       }else{
 	state = GameState::newlife;
 	

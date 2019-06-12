@@ -12,11 +12,10 @@
 #include "circle.hpp"
 #include "starEntity.hpp"
 
-
 template<int N>
 class MenuManager 
 {
-  std::vector<sf::Text> options;
+  std::vector<sf::Text> optionsText;
   std::vector<sf::Vector2f> textPositions;
   sf::Font libersans;
 
@@ -44,15 +43,17 @@ class MenuManager
 public:
 
   MenuManager(sf::Font& fonts,int x,int y);
-  
-  
+
+  // template declaration
   template <typename>
-  struct forNArgsImpl;
-  
+  struct forNArgsImpl{};
+
+  // template specialization with the sequence
   template<std::size_t...TNcalls>
   struct forNArgsImpl< std::index_sequence<TNcalls...> >
   {
-    
+
+    // functor is a first argument, second argument is a tuple with variable number of members
     template<typename TF,typename... Ts>
     static void exec(TF&& mFn,const std::tuple<Ts...>& mXs)
     {
@@ -69,19 +70,23 @@ public:
       mFn(TNBase,std::get<TNBase>(mXs));
     }
   };
-  
+
+  // variable number of string will be passed as an argument, using variadic template
   template<typename...T>
   void setOptionsString(T&& ... args)
   {
     static_assert((sizeof...(args))==N,"No of string should be same as no of fonts to be displayed");
-    
+
+    // count the number of arguments, then make the index sequence 
     constexpr auto noOfStrings(sizeof...(args));
     
     forNArgsImpl< std::make_index_sequence<noOfStrings> >::exec(
 								[this](auto x,auto y)
 								{
-								  options[x].setString(y);
+								  optionsText[x].setString(y);
 								},
+								// string will be passed as a tuple to exec function, first
+								// argument is a functor
 								std::forward_as_tuple(std::forward<T>(args)...)
 								);
   }

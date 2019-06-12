@@ -3,6 +3,7 @@ project(arkanoid_game)
 
 # all the header files are available in 'src' folder
 include_directories(include)
+include_directories(src)
 
 set(PROJECT_LINK_LIBS sfml-audio sfml-window sfml-graphics sfml-system pthread boost_system X11)
 

@@ -43,10 +43,14 @@ public:
     return *ptr;
     
   }
-  
+
+  // variadic template for the function, it is expanded using initializer_list 
   template<typename...Ts>
   void addFonts(Ts&&...args){
-    (void)std::initializer_list<int>{(fontsContainer.setFontProperties(args),0)...};
+    //    std::initializer_list<int>{fontsContainer.setFontProperties(args)...};
+    // this also works, it expands the variabdic template inside the initializer list for each argument
+    // so {fontsContainer.setFontProperties(args1),fontsContainer.setFontProperties(args2),fontsContainer.setFontProperties(args3),...}
+    auto a = {fontsContainer.setFontProperties(args)...};
   }
   
   template<FontType T>
