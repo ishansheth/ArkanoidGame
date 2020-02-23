@@ -3,14 +3,9 @@ dist: xenial
 sudo: required
 group: beta
 
-services:
-  - docker
-
 compiler:
   - gcc
   - clang
 script:
-  - mkdir ArkanoidGame/build
-  - cd ArkanoidGame/build
-  - cmake ..
+  - cmake
   - make 
