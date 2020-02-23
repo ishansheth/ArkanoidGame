@@ -1,0 +1,14 @@
+language: cpp
+dist: xenial
+sudo: required
+group: beta
+
+services:
+  - docker
+
+compiler:
+  - gcc
+  - clang
+script:
+  - cmake ..
+  - make ci
