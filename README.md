@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/ishansheth/ArkanoidGame.svg?branch=master)](https://travis-ci.com/ishansheth/ArkanoidGame)
+
 # ArkanoidGame
 A simple Arkanoid game with C++14 features and concepts. 
 
