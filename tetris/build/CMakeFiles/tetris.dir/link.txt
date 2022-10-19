@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/tetris.dir/main.cpp.o  -o tetris -lsfml-graphics -lsfml-system -lsfml-audio -lsfml-window -lpthread -lboost_system 

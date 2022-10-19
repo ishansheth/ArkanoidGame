@@ -1,0 +1,3 @@
+/home/ishan/Games16/01 Tetris/build/CMakeFiles/rebuild_cache.dir
+/home/ishan/Games16/01 Tetris/build/CMakeFiles/tetris.dir
+/home/ishan/Games16/01 Tetris/build/CMakeFiles/edit_cache.dir
