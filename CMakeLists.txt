@@ -3,7 +3,7 @@ project(GameLauncher)
 
 include_directories(gameloader common)
 
-set(PROJECT_LINK_LIBS sfml-graphics sfml-system sfml-audio sfml-window pthread boost_system)
+set(PROJECT_LINK_LIBS sfml-graphics sfml-system sfml-audio sfml-window pthread)
 
 find_package(SFML COMPONENTS graphics system audio window REQUIRED)
 
